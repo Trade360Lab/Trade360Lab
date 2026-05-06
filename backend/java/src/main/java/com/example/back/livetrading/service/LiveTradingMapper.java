@@ -2,17 +2,20 @@ package com.example.back.livetrading.service;
 
 import com.example.back.livetrading.dto.CircuitBreakerResponse;
 import com.example.back.livetrading.dto.LiveBalanceResponse;
+import com.example.back.livetrading.dto.LiveAuditEventResponse;
 import com.example.back.livetrading.dto.LiveCredentialStatusResponse;
 import com.example.back.livetrading.dto.LiveOrderResponse;
 import com.example.back.livetrading.dto.LivePositionResponse;
 import com.example.back.livetrading.dto.LiveRiskEventResponse;
 import com.example.back.livetrading.dto.LiveSessionResponse;
+import com.example.back.livetrading.dto.TestnetCertificationReportResponse;
 import com.example.back.livetrading.entity.CircuitBreakerStateEntity;
 import com.example.back.livetrading.entity.LiveExchangeCredentialEntity;
 import com.example.back.livetrading.entity.LiveOrderEntity;
 import com.example.back.livetrading.entity.LivePositionEntity;
 import com.example.back.livetrading.entity.LiveRiskEventEntity;
 import com.example.back.livetrading.entity.LiveTradingSessionEntity;
+import com.example.back.livetrading.entity.TestnetCertificationReportEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -111,6 +114,38 @@ public class LiveTradingMapper {
                 event.getEventType(),
                 event.getReason(),
                 event.getCreatedAt()
+        );
+    }
+
+    public LiveAuditEventResponse toAuditEventResponse(LiveRiskEventEntity event, LiveOrderEntity order) {
+        return new LiveAuditEventResponse(
+                event.getId(),
+                event.getOrderId(),
+                event.getStrategyId(),
+                event.getExchange(),
+                event.getSymbol(),
+                event.getEventType(),
+                order == null ? null : order.getStatus(),
+                event.getReason(),
+                event.getCreatedAt()
+        );
+    }
+
+    public TestnetCertificationReportResponse toCertificationReportResponse(TestnetCertificationReportEntity report) {
+        return new TestnetCertificationReportResponse(
+                report.getId(),
+                report.getExchange(),
+                report.getEnvironment(),
+                report.getStartedAt(),
+                report.getFinishedAt(),
+                report.getConnectivityStatus(),
+                report.getAccountSnapshotStatus(),
+                report.getOpenOrdersStatus(),
+                report.getReconciliationStatus(),
+                report.getRiskChecksStatus(),
+                report.getFinalResult(),
+                report.isRealOrderSubmissionEnabled(),
+                report.getMessage()
         );
     }
 }

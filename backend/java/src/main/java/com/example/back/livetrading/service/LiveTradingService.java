@@ -8,13 +8,16 @@ import com.example.back.livetrading.dto.CreateLiveSessionRequest;
 import com.example.back.livetrading.dto.BinanceTestnetCertificationResponse;
 import com.example.back.livetrading.dto.ExchangeHealthResponse;
 import com.example.back.livetrading.dto.KillSwitchRequest;
+import com.example.back.livetrading.dto.LiveAuditEventResponse;
 import com.example.back.livetrading.dto.LiveBalanceResponse;
 import com.example.back.livetrading.dto.LiveCredentialStatusResponse;
+import com.example.back.livetrading.dto.LiveOrderAuditResponse;
 import com.example.back.livetrading.dto.LiveOrderResponse;
 import com.example.back.livetrading.dto.LivePositionResponse;
 import com.example.back.livetrading.dto.LiveRiskEventResponse;
 import com.example.back.livetrading.dto.LiveRiskStatusResponse;
 import com.example.back.livetrading.dto.LiveSessionResponse;
+import com.example.back.livetrading.dto.TestnetCertificationReportResponse;
 import com.example.back.livetrading.config.LiveTradingProperties;
 import com.example.back.livetrading.entity.CircuitBreakerStateEntity;
 import com.example.back.livetrading.entity.KillSwitchStateEntity;
@@ -29,6 +32,7 @@ import com.example.back.livetrading.entity.LiveRiskEventEntity;
 import com.example.back.livetrading.entity.LiveRiskEventType;
 import com.example.back.livetrading.entity.LiveSessionStatus;
 import com.example.back.livetrading.entity.LiveTradingSessionEntity;
+import com.example.back.livetrading.entity.TestnetCertificationReportEntity;
 import com.example.back.livetrading.repository.CircuitBreakerStateRepository;
 import com.example.back.livetrading.repository.KillSwitchStateRepository;
 import com.example.back.livetrading.repository.LiveExchangeCredentialRepository;
@@ -36,14 +40,18 @@ import com.example.back.livetrading.repository.LiveOrderRepository;
 import com.example.back.livetrading.repository.LivePositionRepository;
 import com.example.back.livetrading.repository.LiveRiskEventRepository;
 import com.example.back.livetrading.repository.LiveTradingSessionRepository;
+import com.example.back.livetrading.repository.TestnetCertificationReportRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -69,6 +77,7 @@ public class LiveTradingService {
     private final CircuitBreakerStateRepository circuitBreakerRepository;
     private final KillSwitchStateRepository killSwitchRepository;
     private final LiveRiskEventRepository riskEventRepository;
+    private final TestnetCertificationReportRepository certificationReportRepository;
     private final LiveCredentialCryptoService cryptoService;
     private final LiveExchangeAdapterRegistry adapterRegistry;
     private final LiveTradingMapper mapper;
@@ -289,6 +298,62 @@ public class LiveTradingService {
                 .toList();
     }
 
+    public List<LiveAuditEventResponse> auditEvents(
+            Instant from,
+            Instant to,
+            String exchange,
+            String symbol,
+            LiveOrderStatus status,
+            Long orderId,
+            String reason
+    ) {
+        Long userId = AuthContext.requireUserId();
+        Map<Long, LiveOrderEntity> ordersById = orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
+                .collect(java.util.stream.Collectors.toMap(LiveOrderEntity::getId, order -> order));
+        Specification<LiveRiskEventEntity> specification = auditSpecification(
+                userId, from, to, exchange, symbol, orderId, reason);
+        return riskEventRepository.findAll(specification).stream()
+                .filter(event -> status == null || orderStatusMatches(ordersById, event, status))
+                .sorted(Comparator.comparing(LiveRiskEventEntity::getCreatedAt).reversed())
+                .map(event -> mapper.toAuditEventResponse(event, ordersById.get(event.getOrderId())))
+                .toList();
+    }
+
+    public String auditEventsCsv(
+            Instant from,
+            Instant to,
+            String exchange,
+            String symbol,
+            LiveOrderStatus status,
+            Long orderId,
+            String reason
+    ) {
+        StringBuilder csv = new StringBuilder("eventId,orderId,strategyId,exchange,symbol,eventType,orderStatus,reason,createdAt\n");
+        for (LiveAuditEventResponse event : auditEvents(from, to, exchange, symbol, status, orderId, reason)) {
+            csv.append(event.eventId()).append(',')
+                    .append(nullToBlank(event.orderId())).append(',')
+                    .append(nullToBlank(event.strategyId())).append(',')
+                    .append(csvCell(event.exchange())).append(',')
+                    .append(csvCell(event.symbol())).append(',')
+                    .append(event.eventType()).append(',')
+                    .append(nullToBlank(event.orderStatus())).append(',')
+                    .append(csvCell(event.reason())).append(',')
+                    .append(event.createdAt())
+                    .append('\n');
+        }
+        return csv.toString();
+    }
+
+    public LiveOrderAuditResponse orderAudit(Long id) {
+        Long userId = AuthContext.requireUserId();
+        LiveOrderEntity order = orderRepository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new BacktestResourceNotFoundException("Live order not found: " + id));
+        List<LiveAuditEventResponse> events = riskEventRepository.findAllByUserIdAndOrderIdOrderByCreatedAtDesc(userId, id).stream()
+                .map(event -> mapper.toAuditEventResponse(event, order))
+                .toList();
+        return new LiveOrderAuditResponse(mapper.toOrderResponse(order), events);
+    }
+
     @Transactional
     public LiveRiskStatusResponse activateKillSwitch(KillSwitchRequest request) {
         Long userId = AuthContext.requireUserId();
@@ -349,6 +414,41 @@ public class LiveTradingService {
         );
     }
 
+    @Transactional
+    public TestnetCertificationReportResponse runBinanceTestnetCertificationReport() {
+        Instant startedAt = Instant.now();
+        BinanceTestnetCertificationResponse certification = certifyBinanceTestnet();
+        TestnetCertificationReportEntity report = new TestnetCertificationReportEntity();
+        report.setUserId(AuthContext.requireUserId());
+        report.setExchange(certification.exchange());
+        report.setEnvironment("testnet");
+        report.setStartedAt(startedAt);
+        report.setFinishedAt(certification.checkedAt());
+        report.setConnectivityStatus(status(certification.credentialsValid() || certification.credentialsPresent()));
+        report.setAccountSnapshotStatus(status(certification.accountSnapshotReachable()));
+        report.setOpenOrdersStatus(status(certification.openOrdersSnapshotReachable()));
+        report.setReconciliationStatus(certification.certified() ? "PASS" : "NOT_CERTIFIED");
+        report.setRiskChecksStatus(certification.realOrderSubmissionEnabled() ? "FAIL_REAL_SUBMISSION_ENABLED" : "PASS_SAFE_DEFAULT");
+        report.setFinalResult(certification.certified() && !certification.realOrderSubmissionEnabled() ? "PASS" : "FAIL");
+        report.setRealOrderSubmissionEnabled(certification.realOrderSubmissionEnabled());
+        report.setMessage(certification.message());
+        return mapper.toCertificationReportResponse(certificationReportRepository.save(report));
+    }
+
+    public TestnetCertificationReportResponse latestBinanceTestnetCertificationReport() {
+        Long userId = AuthContext.requireUserId();
+        return certificationReportRepository.findFirstByUserIdAndExchangeOrderByFinishedAtDesc(userId, "binance")
+                .map(mapper::toCertificationReportResponse)
+                .orElseThrow(() -> new BacktestResourceNotFoundException("Testnet certification report not found"));
+    }
+
+    public TestnetCertificationReportResponse getCertificationReport(Long id) {
+        Long userId = AuthContext.requireUserId();
+        return certificationReportRepository.findByIdAndUserId(id, userId)
+                .map(mapper::toCertificationReportResponse)
+                .orElseThrow(() -> new BacktestResourceNotFoundException("Testnet certification report not found: " + id));
+    }
+
     public BinanceTestnetCertificationResponse certifyBinanceTestnet() {
         Long userId = AuthContext.requireUserId();
         LiveExchangeCredentialEntity credential = credentialRepository
@@ -375,6 +475,61 @@ public class LiveTradingService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Binance adapter is not available");
         }
         return binanceAdapter.certifyTestnetReadOnly(decrypt(credential));
+    }
+
+    private Specification<LiveRiskEventEntity> auditSpecification(
+            Long userId,
+            Instant from,
+            Instant to,
+            String exchange,
+            String symbol,
+            Long orderId,
+            String reason
+    ) {
+        return (root, query, builder) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+            predicates.add(builder.equal(root.get("userId"), userId));
+            if (from != null) {
+                predicates.add(builder.greaterThanOrEqualTo(root.get("createdAt"), from));
+            }
+            if (to != null) {
+                predicates.add(builder.lessThanOrEqualTo(root.get("createdAt"), to));
+            }
+            if (exchange != null && !exchange.isBlank()) {
+                predicates.add(builder.equal(builder.lower(root.get("exchange")), normalizeExchange(exchange)));
+            }
+            if (symbol != null && !symbol.isBlank()) {
+                predicates.add(builder.equal(builder.upper(root.get("symbol")), symbol.trim().toUpperCase()));
+            }
+            if (orderId != null) {
+                predicates.add(builder.equal(root.get("orderId"), orderId));
+            }
+            if (reason != null && !reason.isBlank()) {
+                predicates.add(builder.like(builder.lower(root.get("reason")), "%" + reason.trim().toLowerCase() + "%"));
+            }
+            query.orderBy(builder.desc(root.get("createdAt")));
+            return builder.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
+        };
+    }
+
+    private boolean orderStatusMatches(Map<Long, LiveOrderEntity> ordersById, LiveRiskEventEntity event, LiveOrderStatus status) {
+        LiveOrderEntity order = ordersById.get(event.getOrderId());
+        return order != null && order.getStatus() == status;
+    }
+
+    private String status(boolean passed) {
+        return passed ? "PASS" : "FAIL";
+    }
+
+    private String nullToBlank(Object value) {
+        return value == null ? "" : value.toString();
+    }
+
+    private String csvCell(String value) {
+        if (value == null) {
+            return "";
+        }
+        return "\"" + value.replace("\"", "\"\"") + "\"";
     }
 
     private String validateRisk(LiveTradingSessionEntity session, LiveOrderEntity order) {
