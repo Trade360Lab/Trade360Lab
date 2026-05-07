@@ -1,0 +1,9 @@
+$ErrorActionPreference = "Stop"
+$Service = $env:COMPOSE_SERVICE
+if (-not $Service) { $Service = "postgres" }
+$DbName = $env:DB_NAME
+if (-not $DbName) { $DbName = "tradelab" }
+$DbUser = $env:DB_USER
+if (-not $DbUser) { $DbUser = "postgres" }
+$Sql = "INSERT INTO users (email, password_hash, is_active) VALUES ('demo@trade360lab.local', '`$2a`$10`$demo.demo.demo.demo.demo.demo.demo.demo.demo.demo.demo', TRUE) ON CONFLICT (email) DO NOTHING;"
+$Sql | docker compose exec -T $Service psql -U $DbUser -d $DbName -v ON_ERROR_STOP=1
