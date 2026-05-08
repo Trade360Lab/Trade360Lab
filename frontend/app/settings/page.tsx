@@ -17,9 +17,24 @@ type JavaHealth = {
   service: string;
 };
 
-type PythonHealth = {
+type JavaReadiness = {
   status: string;
   service: string;
+  apiVersion: string;
+  database: string;
+  migrationStatus: string;
+  liveTradingMode: string;
+  realOrderSubmissionEnabled: boolean;
+  safety: string;
+};
+
+type PythonReadiness = {
+  status: string;
+  service: string;
+  parserVersion: string;
+  database: string;
+  engineVersion: string;
+  internalAuthConfigured: string;
 };
 
 type LiveRiskStatus = {
@@ -37,7 +52,7 @@ type ExchangeHealth = {
 };
 
 type ServiceState = "ok" | "warn" | "error";
-type ServiceKey = "java" | "python" | "risk" | "exchange";
+type ServiceKey = "java" | "python" | "risk" | "exchange" | "readiness";
 
 type ServiceResult<T> = {
   data: T | null;
@@ -68,7 +83,8 @@ async function readService<T>(path: string): Promise<ServiceResult<T>> {
 
 export default function SettingsPage() {
   const [javaHealth, setJavaHealth] = useState<JavaHealth | null>(null);
-  const [pythonHealth, setPythonHealth] = useState<PythonHealth | null>(null);
+  const [javaReadiness, setJavaReadiness] = useState<JavaReadiness | null>(null);
+  const [pythonReadiness, setPythonReadiness] = useState<PythonReadiness | null>(null);
   const [liveRisk, setLiveRisk] = useState<LiveRiskStatus | null>(null);
   const [exchangeHealth, setExchangeHealth] = useState<ExchangeHealth | null>(null);
   const [healthErrors, setHealthErrors] = useState<Partial<Record<ServiceKey, string>>>({});
@@ -76,20 +92,23 @@ export default function SettingsPage() {
 
   async function refresh() {
     setIsLoading(true);
-    const [javaResult, pythonResult, riskResult, exchangeResult] = await Promise.all([
+    const [javaResult, javaReadinessResult, pythonReadinessResult, riskResult, exchangeResult] = await Promise.all([
       readService<JavaHealth>("/api/health"),
-      readService<PythonHealth>("/api/python/health"),
+      readService<JavaReadiness>("/api/readiness"),
+      readService<PythonReadiness>("/api/python/readiness"),
       readService<LiveRiskStatus>("/api/live/risk/status"),
       readService<ExchangeHealth>("/api/live/exchange/health?exchange=binance"),
     ]);
 
     setJavaHealth(javaResult.data);
-    setPythonHealth(pythonResult.data);
+    setJavaReadiness(javaReadinessResult.data);
+    setPythonReadiness(pythonReadinessResult.data);
     setLiveRisk(riskResult.data);
     setExchangeHealth(exchangeResult.data);
     setHealthErrors({
       java: javaResult.error ?? undefined,
-      python: pythonResult.error ?? undefined,
+      readiness: javaReadinessResult.error ?? undefined,
+      python: pythonReadinessResult.error ?? undefined,
       risk: riskResult.error ?? undefined,
       exchange: exchangeResult.error ?? undefined,
     });
@@ -114,7 +133,7 @@ export default function SettingsPage() {
     <div className="flex min-h-full flex-col gap-5">
       <PageHeader
         eyebrow="Release operations"
-        title="Service Health"
+        title="Readiness Dashboard"
         description="Release status, service reachability, and live trading safety state."
         actions={
           <Button variant="secondary" size="sm" onClick={refresh} disabled={isLoading}>
@@ -138,10 +157,11 @@ export default function SettingsPage() {
             <Metric label="Version" value={`v${releaseInfo.version}`} />
             <Metric
               label="Live mode"
-              value={exchangeHealth?.realOrderSubmissionEnabled ? "Real submission enabled" : "Guarded testnet mode"}
-              state={exchangeHealth?.realOrderSubmissionEnabled ? "warn" : "ok"}
+              value={javaReadiness?.liveTradingMode ?? (exchangeHealth?.realOrderSubmissionEnabled ? "Real submission enabled" : "Guarded testnet mode")}
+              state={javaReadiness?.realOrderSubmissionEnabled || exchangeHealth?.realOrderSubmissionEnabled ? "warn" : "ok"}
             />
-            <Metric label="Binance" value={exchangeHealth?.message ?? "Not checked"} />
+            <Metric label="Database" value={javaReadiness?.database ?? "Not checked"} state={javaReadiness?.database === "ok" ? "ok" : "warn"} />
+            <Metric label="Migrations" value={javaReadiness?.migrationStatus ?? "Not checked"} />
           </div>
         </SurfaceCard>
 
@@ -160,9 +180,9 @@ export default function SettingsPage() {
               icon={<CheckCircle2 className="h-4 w-4" />}
             />
             <ServiceTile
-              title={pythonHealth?.service ?? "python-parser"}
-              detail={healthErrors.python ?? pythonHealth?.status ?? (isLoading ? "checking" : "unavailable")}
-              state={healthErrors.python ? "error" : pythonHealth?.status === "ok" ? "ok" : isLoading ? "warn" : "error"}
+              title={pythonReadiness?.service ?? "python-parser"}
+              detail={healthErrors.python ?? pythonReadiness?.status ?? (isLoading ? "checking" : "unavailable")}
+              state={healthErrors.python ? "error" : pythonReadiness?.status === "ready" ? "ok" : isLoading ? "warn" : "error"}
               icon={<CheckCircle2 className="h-4 w-4" />}
             />
           </div>
@@ -196,6 +216,20 @@ export default function SettingsPage() {
                   : "Disabled by default"
             }
             state={healthErrors.exchange ? "error" : exchangeHealth?.realOrderSubmissionEnabled ? "warn" : "ok"}
+          />
+          <Metric
+            label="Parser DB"
+            value={healthErrors.python ? "Unavailable" : pythonReadiness?.database ?? "Not checked"}
+            state={healthErrors.python ? "error" : pythonReadiness?.database === "ok" ? "ok" : "warn"}
+          />
+          <Metric
+            label="Internal auth"
+            value={healthErrors.python ? "Unavailable" : pythonReadiness?.internalAuthConfigured ?? "Not checked"}
+            state={healthErrors.python ? "error" : pythonReadiness?.internalAuthConfigured === "configured" ? "ok" : "warn"}
+          />
+          <Metric
+            label="Engine"
+            value={healthErrors.python ? "Unavailable" : pythonReadiness?.engineVersion ?? "Not checked"}
           />
         </div>
         {liveRisk?.killSwitchReason ? (

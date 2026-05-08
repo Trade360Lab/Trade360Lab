@@ -7,6 +7,7 @@ import com.example.back.common.logging.LogContext;
 import com.example.back.imports.dto.ImportCandlesRequest;
 import com.example.back.imports.dto.ImportCandlesResponse;
 import com.example.back.imports.dto.PythonHealthResponse;
+import com.example.back.imports.dto.PythonReadinessResponse;
 import com.example.back.runs.dto.PythonRunExecuteRequest;
 import com.example.back.runs.dto.PythonRunExecuteResponse;
 import com.example.back.strategies.dto.StrategyValidationRequest;
@@ -60,6 +61,13 @@ public class PythonParserClient {
                 .uri("/health")
                 .retrieve()
                 .body(PythonHealthResponse.class);
+    }
+
+    public PythonReadinessResponse getReadiness() {
+        return restClient.get()
+                .uri("/readiness")
+                .retrieve()
+                .body(PythonReadinessResponse.class);
     }
 
     public StrategyValidationResponse validateStrategy(StrategyValidationRequest request) {
