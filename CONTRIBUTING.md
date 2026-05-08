@@ -32,7 +32,7 @@ The repository is organized as a monorepo with clear runtime boundaries.
 - `CHANGELOG.md`
   - Release history and notable changes.
 
-At the moment, the project does not use a dedicated migration framework such as Flyway or Alembic. Schema changes must be made carefully in the existing SQL initialization files.
+The Java service uses a Flyway migration baseline for release-safe schema evolution while keeping the existing SQL initialization file aligned for simple alpha startup.
 
 ## 3. Getting Started
 
@@ -217,6 +217,14 @@ Checklist before merge:
 - API changes are reflected in the relevant layer
 - `CHANGELOG.md` is updated when the change affects releases or user-visible behavior
 
+Release issues:
+
+- Use the release task template for alpha release scope.
+- Close implemented release issues from commits or PR descriptions with `Closes #...`.
+- Repeat the live trading safety checklist when touching credentials, risk gates, audit export, certification reports, or order submission.
+- Real order submission must remain disabled by default.
+- Testnet certification reports are alpha validation artifacts, not production exchange certification.
+
 ## 7. Coding Standards
 
 ### Java
@@ -289,10 +297,9 @@ Database changes must be conservative.
 
 Current project state:
 
-- There is no dedicated migration tool yet.
-- Schema is initialized from SQL files:
-  - `backend/java/src/main/resources/schema.sql`
-  - `backend/python/parser/schema.sql`
+- Java schema evolution uses Flyway files in `backend/java/src/main/resources/db/migration`.
+- `backend/java/src/main/resources/schema.sql` remains aligned for simple local alpha startup.
+- Python parser-owned schema is initialized from `backend/python/parser/schema.sql`.
 
 Rules for schema changes:
 

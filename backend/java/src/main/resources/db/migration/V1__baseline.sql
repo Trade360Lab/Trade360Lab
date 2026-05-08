@@ -1,0 +1,2 @@
+-- Baseline marker for the alpha schema that is still initialized by schema.sql
+-- for simple local startup. Future releases should add additive migrations here.
