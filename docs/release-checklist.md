@@ -1,12 +1,12 @@
 <h1 align="center">Чеклист альфа-релиза</h1>
 
-Целевой релиз: `v0.9.1-alpha.1`
+Целевой релиз: `v0.9.2-alpha.1`
 
 <h2 align="center">Область релиза</h2>
-- [x] Выбраны тег и версия релиза: `0.9.1-alpha.1`
+- [x] Выбраны тег и версия релиза: `0.9.2-alpha.1`
 - [x] Журнал изменений обновлен для этого релиза
 - [x] Черновик release notes подготовлен
-- [ ] GitHub Release создан из тега `v0.9.1-alpha.1`
+- [ ] GitHub Release создан из тега `v0.9.2-alpha.1`
 
 <h2 align="center">Качество кода</h2>
 - [ ] Frontend: `npm --prefix frontend ci`
@@ -29,9 +29,11 @@
 - [ ] Проверка Java API: `http://localhost:18080/api/health`
 - [ ] Проверка Python parser: `http://localhost:18000/health`
 - [ ] `scripts/docker-compose-smoke.sh` завершается успешно
-- [ ] `scripts/export-openapi-artifacts.sh 0.9.1-alpha.1` записывает:
-  - `artifacts/openapi-java-v0.9.1-alpha.1.json`
-  - `artifacts/openapi-python-v0.9.1-alpha.1.json`
+- [ ] `scripts/export-openapi-artifacts.sh 0.9.2-alpha.1` записывает:
+  - `artifacts/openapi-java-v0.9.2-alpha.1.json`
+  - `artifacts/openapi-python-v0.9.2-alpha.1.json`
+- [ ] `scripts/collect-diagnostics.sh` создает diagnostics bundle и не падает при unavailable services
+- [ ] Security scans видимы в CI или локальном отчете
 
 <h2 align="center">Конфигурация и безопасность</h2>
 - [ ] Учетные данные для целевого окружения настроены и не являются локальными заглушками
@@ -46,7 +48,7 @@
 - [ ] Коммит релиза отправлен в `main`
 - [ ] Тег релиза создан
 - [ ] Tagged alpha release workflow прошел успешно
-- [ ] Все bugfix issues закрыты или явно перенесены в future work
+- [ ] Все release issues закрыты или явно перенесены в future work
 - [ ] План rollback задокументирован
 - [ ] В release notes указано, что real order submission остается выключенным по умолчанию
 - [ ] В release notes указано, что testnet certification не означает production readiness
