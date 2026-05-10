@@ -1,7 +1,9 @@
 package com.example.back.livetrading.controller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -15,6 +17,7 @@ import com.example.back.livetrading.repository.LiveOrderRepository;
 import com.example.back.livetrading.repository.LivePositionRepository;
 import com.example.back.livetrading.repository.LiveRiskEventRepository;
 import com.example.back.livetrading.repository.LiveTradingSessionRepository;
+import com.example.back.livetrading.repository.TestnetCertificationReportRepository;
 import com.example.back.livetrading.service.ExchangeBalanceSnapshot;
 import com.example.back.livetrading.service.ExchangeCredentials;
 import com.example.back.livetrading.service.ExchangePositionSnapshot;
@@ -71,6 +74,9 @@ class LiveTradingControllerIntegrationTest {
     private LiveRiskEventRepository riskEventRepository;
 
     @Autowired
+    private TestnetCertificationReportRepository certificationReportRepository;
+
+    @Autowired
     private CircuitBreakerStateRepository circuitBreakerRepository;
 
     @Autowired
@@ -85,6 +91,7 @@ class LiveTradingControllerIntegrationTest {
     @BeforeEach
     void setUp() {
         riskEventRepository.deleteAll();
+        certificationReportRepository.deleteAll();
         orderRepository.deleteAll();
         positionRepository.deleteAll();
         sessionRepository.deleteAll();
@@ -224,6 +231,84 @@ class LiveTradingControllerIntegrationTest {
                 .andExpect(jsonPath("$.credentialsPresent").value(false))
                 .andExpect(jsonPath("$.certified").value(false))
                 .andExpect(jsonPath("$.message").value("Active Binance testnet credentials are required"));
+    }
+
+    @Test
+    void auditExportFiltersRejectedOrders() throws Exception {
+        Long sessionId = createEnabledSession();
+
+        mockMvc.perform(post("/api/live/orders")
+                        .with(TestAuth.authenticatedRequest())
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "sessionId": %d,
+                                  "side": "BUY",
+                                  "type": "MARKET",
+                                  "quantity": 100
+                                }
+                                """.formatted(sessionId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+
+        mockMvc.perform(get("/api/live/audit-events")
+                        .param("exchange", "testx")
+                        .param("symbol", "BTCUSDT")
+                        .param("status", "REJECTED")
+                        .param("reason", "notional")
+                        .with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("ORDER_REJECTED")))
+                .andExpect(content().string(containsString("REJECTED")));
+
+        mockMvc.perform(get("/api/live/audit-events/export")
+                        .param("status", "REJECTED")
+                        .with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("ORDER_REJECTED")));
+    }
+
+    @Test
+    void orderAuditReturnsOrderHistory() throws Exception {
+        Long sessionId = createEnabledSession();
+        String response = mockMvc.perform(post("/api/live/orders")
+                        .with(TestAuth.authenticatedRequest())
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "sessionId": %d,
+                                  "side": "BUY",
+                                  "type": "MARKET",
+                                  "quantity": 100
+                                }
+                                """.formatted(sessionId)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        Long orderId = Long.valueOf(response.replaceAll(".*\"id\":(\\d+).*", "$1"));
+
+        mockMvc.perform(get("/api/live/orders/" + orderId + "/audit").with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.order.id").value(orderId))
+                .andExpect(content().string(containsString("ORDER_REJECTED")));
+    }
+
+    @Test
+    void persistsTestnetCertificationReport() throws Exception {
+        mockMvc.perform(post("/api/live/certification/testnet/run")
+                        .with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.exchange").value("binance"))
+                .andExpect(jsonPath("$.environment").value("testnet"))
+                .andExpect(jsonPath("$.finalResult").value("FAIL"))
+                .andExpect(jsonPath("$.realOrderSubmissionEnabled").value(false));
+
+        mockMvc.perform(get("/api/live/certification/testnet/latest")
+                        .with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.exchange").value("binance"))
+                .andExpect(jsonPath("$.riskChecksStatus").value("PASS_SAFE_DEFAULT"));
     }
 
     private Long createEnabledSession() throws Exception {

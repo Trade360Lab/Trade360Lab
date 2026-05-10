@@ -4,6 +4,7 @@ import { FormEvent, ReactNode, useCallback, useEffect, useMemo, useState } from 
 import {
   AlertTriangle,
   ClipboardCheck,
+  Download,
   Plus,
   Power,
   RefreshCw,
@@ -132,6 +133,22 @@ type BinanceCertification = {
   checkedAt: string;
 };
 
+type CertificationReport = {
+  id: number;
+  exchange: string;
+  environment: string;
+  startedAt: string;
+  finishedAt: string;
+  connectivityStatus: string;
+  accountSnapshotStatus: string;
+  openOrdersStatus: string;
+  reconciliationStatus: string;
+  riskChecksStatus: string;
+  finalResult: string;
+  realOrderSubmissionEnabled: boolean;
+  message?: string | null;
+};
+
 const statusTone: Record<string, string> = {
   CREATED: "border-muted-foreground/30 bg-muted/20 text-muted-foreground",
   ENABLED: "border-status-success/35 bg-status-success/12 text-status-success",
@@ -181,6 +198,7 @@ export default function LiveTradingPage() {
   const [riskEvents, setRiskEvents] = useState<LiveRiskEvent[]>([]);
   const [health, setHealth] = useState<ExchangeHealth | null>(null);
   const [certification, setCertification] = useState<BinanceCertification | null>(null);
+  const [certificationReport, setCertificationReport] = useState<CertificationReport | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [credentialForm, setCredentialForm] = useState({
@@ -216,7 +234,7 @@ export default function LiveTradingPage() {
     setIsLoading(true);
     setErrorMessage(null);
     try {
-      const [credentialData, sessionData, orderData, positionData, riskData, riskEventData, healthData] =
+      const [credentialData, sessionData, orderData, positionData, riskData, riskEventData, healthData, reportData] =
         await Promise.all([
           readJson<LiveCredential[]>(await apiFetch("/api/live/credentials/status")),
           readJson<LiveSession[]>(await apiFetch("/api/live/sessions")),
@@ -225,6 +243,7 @@ export default function LiveTradingPage() {
           readJson<LiveRiskStatus>(await apiFetch("/api/live/risk/status")),
           readJson<LiveRiskEvent[]>(await apiFetch("/api/live/risk/events")),
           readJson<ExchangeHealth>(await apiFetch("/api/live/exchange/health?exchange=binance")),
+          readJson<CertificationReport>(await apiFetch("/api/live/certification/testnet/latest")).catch(() => null),
         ]);
       setCredentials(credentialData);
       setSessions(sessionData);
@@ -233,6 +252,7 @@ export default function LiveTradingPage() {
       setRisk(riskData);
       setRiskEvents(riskEventData);
       setHealth(healthData);
+      setCertificationReport(reportData);
       if (!selectedSessionId && sessionData.length > 0) {
         setSelectedSessionId(sessionData[0].id);
       }
@@ -329,10 +349,15 @@ export default function LiveTradingPage() {
   }
 
   async function certifyBinanceTestnet() {
-    const result = await readJson<BinanceCertification>(
-      await apiFetch("/api/live/exchange/binance/testnet-certification", { method: "POST" })
+    const report = await readJson<CertificationReport>(
+      await apiFetch("/api/live/certification/testnet/run", { method: "POST" })
     );
-    setCertification(result);
+    setCertificationReport(report);
+    setCertification(null);
+  }
+
+  function exportAuditEvents() {
+    window.open("/api/live/audit-events/export", "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -445,19 +470,29 @@ export default function LiveTradingPage() {
             title="Binance testnet certification"
             subtitle="Read-only account and open-order snapshots"
             actions={
-              <Button size="sm" variant="secondary" onClick={certifyBinanceTestnet}>
-                <ClipboardCheck className="mr-2 h-4 w-4" />
-                Certify
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="secondary" onClick={exportAuditEvents}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export audit
+                </Button>
+                <Button size="sm" variant="secondary" onClick={certifyBinanceTestnet}>
+                  <ClipboardCheck className="mr-2 h-4 w-4" />
+                  Certify
+                </Button>
+              </div>
             }
           >
             <div className="grid gap-3 md:grid-cols-4">
-              <Metric label="Scope" value={certification?.testnetOnly ? "Testnet only" : "Not checked"} />
-              <Metric label="Account" value={certification?.accountSnapshotReachable ? "Reachable" : "Not verified"} />
-              <Metric label="Open orders" value={certification?.openOrdersSnapshotReachable ? "Reachable" : "Not verified"} />
-              <Metric label="Result" value={certification?.certified ? "Certified" : "Pending"} />
+              <Metric label="Scope" value={certificationReport ? `${certificationReport.exchange} ${certificationReport.environment}` : certification?.testnetOnly ? "Testnet only" : "Not checked"} />
+              <Metric label="Account" value={certificationReport?.accountSnapshotStatus ?? (certification?.accountSnapshotReachable ? "PASS" : "Not verified")} />
+              <Metric label="Open orders" value={certificationReport?.openOrdersStatus ?? (certification?.openOrdersSnapshotReachable ? "PASS" : "Not verified")} />
+              <Metric label="Result" value={certificationReport?.finalResult ?? (certification?.certified ? "PASS" : "Pending")} />
             </div>
-            {certification ? (
+            {certificationReport ? (
+              <div className="mt-4 rounded-[16px] border border-border/70 bg-panel-subtle px-4 py-3 text-xs text-muted-foreground">
+                Report #{certificationReport.id} finished {new Date(certificationReport.finishedAt).toLocaleString()}: {certificationReport.message ?? certificationReport.finalResult}
+              </div>
+            ) : certification ? (
               <div className="mt-4 rounded-[16px] border border-border/70 bg-panel-subtle px-4 py-3 text-xs text-muted-foreground">
                 {certification.message}
                 {certification.accountSnapshotSummary ? `; ${certification.accountSnapshotSummary}` : ""}

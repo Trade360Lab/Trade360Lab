@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.9.2-alpha.1] - 2026-05-09
+
+### Operational Readiness & Audit Hardening
+
+### Added
+- Live trading audit export for risk events and rejected orders.
+- Persistent Binance testnet certification reports.
+- Local database backup, restore, reset, and demo seed scripts.
+- Database migration baseline for release-safe schema evolution.
+- Diagnostics bundle collector for alpha troubleshooting.
+- Readiness dashboard with service, database, version, and safety status.
+- Dependency and secret scanning visibility in CI.
+- GitHub issue and pull request templates for release and safety workflows.
+
+### Changed
+- Expanded health checks into readiness checks.
+- Improved release validation with diagnostics and audit artifacts.
+- Documented local recovery and troubleshooting flows.
+
+### Safety Notes
+- Real order submission remains disabled by default.
+- Testnet certification reports are not production exchange certification.
+- Audit exports are intended for alpha validation and troubleshooting.
+
+---
+
 ## [0.9.1-alpha.1] - 2026-05-05
 
 ### Bug Fixes & Alpha Stabilization

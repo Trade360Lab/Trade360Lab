@@ -6,18 +6,27 @@ import com.example.back.livetrading.dto.CreateLiveOrderRequest;
 import com.example.back.livetrading.dto.CreateLiveSessionRequest;
 import com.example.back.livetrading.dto.ExchangeHealthResponse;
 import com.example.back.livetrading.dto.KillSwitchRequest;
+import com.example.back.livetrading.dto.LiveAuditEventResponse;
 import com.example.back.livetrading.dto.LiveBalanceResponse;
 import com.example.back.livetrading.dto.LiveCredentialStatusResponse;
+import com.example.back.livetrading.dto.LiveOrderAuditResponse;
 import com.example.back.livetrading.dto.LiveOrderResponse;
 import com.example.back.livetrading.dto.LivePositionResponse;
 import com.example.back.livetrading.dto.LiveRiskEventResponse;
 import com.example.back.livetrading.dto.LiveRiskStatusResponse;
 import com.example.back.livetrading.dto.LiveSessionResponse;
+import com.example.back.livetrading.dto.TestnetCertificationReportResponse;
+import com.example.back.livetrading.entity.LiveOrderStatus;
 import com.example.back.livetrading.service.LiveTradingService;
 import jakarta.validation.Valid;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -112,6 +121,40 @@ public class LiveTradingController {
         return liveTradingService.riskEvents();
     }
 
+    @GetMapping("/audit-events")
+    public List<LiveAuditEventResponse> auditEvents(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+            @RequestParam(required = false) String exchange,
+            @RequestParam(required = false) String symbol,
+            @RequestParam(required = false) LiveOrderStatus status,
+            @RequestParam(required = false) Long orderId,
+            @RequestParam(required = false) String reason
+    ) {
+        return liveTradingService.auditEvents(from, to, exchange, symbol, status, orderId, reason);
+    }
+
+    @GetMapping("/audit-events/export")
+    public ResponseEntity<String> exportAuditEvents(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+            @RequestParam(required = false) String exchange,
+            @RequestParam(required = false) String symbol,
+            @RequestParam(required = false) LiveOrderStatus status,
+            @RequestParam(required = false) Long orderId,
+            @RequestParam(required = false) String reason
+    ) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=live-audit-events.csv")
+                .body(liveTradingService.auditEventsCsv(from, to, exchange, symbol, status, orderId, reason));
+    }
+
+    @GetMapping("/orders/{id}/audit")
+    public LiveOrderAuditResponse orderAudit(@PathVariable Long id) {
+        return liveTradingService.orderAudit(id);
+    }
+
     @PostMapping("/kill-switch/activate")
     public LiveRiskStatusResponse activateKillSwitch(@RequestBody(required = false) KillSwitchRequest request) {
         KillSwitchRequest safeRequest = request == null ? new KillSwitchRequest(null, false) : request;
@@ -136,5 +179,20 @@ public class LiveTradingController {
     @PostMapping("/exchange/binance/testnet-certification")
     public BinanceTestnetCertificationResponse certifyBinanceTestnet() {
         return liveTradingService.certifyBinanceTestnet();
+    }
+
+    @PostMapping("/certification/testnet/run")
+    public TestnetCertificationReportResponse runTestnetCertification() {
+        return liveTradingService.runBinanceTestnetCertificationReport();
+    }
+
+    @GetMapping("/certification/testnet/latest")
+    public TestnetCertificationReportResponse latestTestnetCertification() {
+        return liveTradingService.latestBinanceTestnetCertificationReport();
+    }
+
+    @GetMapping("/certification/testnet/{id}")
+    public TestnetCertificationReportResponse getTestnetCertification(@PathVariable Long id) {
+        return liveTradingService.getCertificationReport(id);
     }
 }

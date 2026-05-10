@@ -6,8 +6,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.example.back.livetrading.config.LiveTradingProperties;
 import com.example.back.imports.client.PythonParserClient;
 import com.example.back.imports.dto.PythonHealthResponse;
+import com.example.back.imports.dto.PythonReadinessResponse;
+import java.math.BigDecimal;
+import java.sql.Connection;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,11 +27,28 @@ class HealthControllerTest {
     @Mock
     private PythonParserClient pythonParserClient;
 
+    @Mock
+    private DataSource dataSource;
+
+    @Mock
+    private Connection connection;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new HealthController(pythonParserClient)).build();
+        LiveTradingProperties liveTradingProperties = new LiveTradingProperties(
+                false,
+                "change-me-live-credential-encryption-key",
+                new BigDecimal("100.00000000"),
+                new BigDecimal("500.00000000"),
+                new BigDecimal("1000.00000000"),
+                3,
+                10,
+                null
+        );
+        mockMvc = MockMvcBuilders.standaloneSetup(new HealthController(
+                pythonParserClient, dataSource, liveTradingProperties)).build();
     }
 
     @Test
@@ -47,5 +69,35 @@ class HealthControllerTest {
         mockMvc.perform(get("/api/python/health"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.service", is("python-parser")));
+    }
+
+    @Test
+    void readinessReturnsDatabaseAndSafetyStatus() throws Exception {
+        when(dataSource.getConnection()).thenReturn(connection);
+        when(connection.isValid(2)).thenReturn(true);
+
+        mockMvc.perform(get("/api/readiness"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status", is("ready")))
+            .andExpect(jsonPath("$.apiVersion", is("0.9.2-alpha.1")))
+            .andExpect(jsonPath("$.database", is("ok")))
+            .andExpect(jsonPath("$.realOrderSubmissionEnabled", is(false)));
+    }
+
+    @Test
+    void pythonReadinessReturnsDelegatedResponse() throws Exception {
+        PythonReadinessResponse response = new PythonReadinessResponse();
+        response.setStatus("ready");
+        response.setService("python-parser");
+        response.setParserVersion("0.9.2-alpha.1");
+        response.setDatabase("ok");
+        response.setEngineVersion("python-execution-engine/0.9.2-alpha.1");
+        response.setInternalAuthConfigured("configured");
+        when(pythonParserClient.getReadiness()).thenReturn(response);
+
+        mockMvc.perform(get("/api/python/readiness"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.service", is("python-parser")))
+            .andExpect(jsonPath("$.database", is("ok")));
     }
 }

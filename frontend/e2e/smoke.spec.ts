@@ -20,10 +20,39 @@ async function seedSession(page: Page) {
   await page.route("**/api/python/health", (route) =>
     route.fulfill({ json: { status: "ok", service: "python-parser" } })
   );
+  await page.route("**/api/readiness", (route) =>
+    route.fulfill({
+      json: {
+        status: "ready",
+        service: "java-api",
+        apiVersion: "0.9.2-alpha.1",
+        database: "ok",
+        migrationStatus: "flyway-baseline-present",
+        liveTradingMode: "guarded-alpha",
+        realOrderSubmissionEnabled: false,
+        safety: "real order submission disabled by default",
+      },
+    })
+  );
+  await page.route("**/api/python/readiness", (route) =>
+    route.fulfill({
+      json: {
+        status: "ready",
+        service: "python-parser",
+        parserVersion: "0.9.2-alpha.1",
+        database: "ok",
+        engineVersion: "python-execution-engine/0.9.2-alpha.1",
+        internalAuthConfigured: "configured",
+      },
+    })
+  );
   await page.route("**/api/live/risk/status", (route) =>
     route.fulfill({ json: { killSwitchActive: false, circuitBreakers: [] } })
   );
   await page.route("**/api/live/risk/events", (route) => route.fulfill({ json: [] }));
+  await page.route("**/api/live/certification/testnet/latest", (route) =>
+    route.fulfill({ status: 404, json: { message: "not found" } })
+  );
   await page.route(/\/api\/live\/exchange\/health.*/, (route) =>
     route.fulfill({
       json: {
@@ -81,6 +110,6 @@ test("live trading safety and service health pages render", async ({ page }) => 
   await expect(page.getByText("Binance testnet certification")).toBeVisible();
 
   await gotoReady(page, "/settings");
-  await expect(page.getByText("Service Health")).toBeVisible();
-  await expect(page.getByText("v0.9.1-alpha.1").first()).toBeVisible();
+  await expect(page.getByText("Readiness Dashboard")).toBeVisible();
+  await expect(page.getByText("v0.9.2-alpha.1").first()).toBeVisible();
 });

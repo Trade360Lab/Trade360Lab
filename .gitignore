@@ -35,6 +35,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+/diagnostics/
+/backups/
 
 # local env files
 .env*.local

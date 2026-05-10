@@ -16,7 +16,7 @@ from parser.runs.dto.run_execute_dto import RunExecuteRequest, RunExecuteRespons
 logger = logging.getLogger(__name__)
 
 
-ENGINE_VERSION = "python-execution-engine/0.9.1-alpha.1"
+ENGINE_VERSION = "python-execution-engine/0.9.2-alpha.1"
 
 
 class StrategyExecutionService:

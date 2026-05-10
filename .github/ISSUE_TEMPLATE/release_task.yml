@@ -1,0 +1,30 @@
+name: Release task
+description: Track an alpha release task.
+title: "Release task: "
+body:
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What release task needs to be completed?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ] Release scope is documented.
+        - [ ] Safety notes are explicit.
+        - [ ] Tests or validation steps are listed.
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Live trading safety
+      options:
+        - label: Real order submission remains disabled by default.
+          required: true
+        - label: Testnet certification is not described as production readiness.
+          required: true

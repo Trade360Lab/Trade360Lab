@@ -34,6 +34,22 @@ class HealthResponse(BaseModel):
     service: str = Field(description="Service identifier.", examples=["python-parser"])
 
 
+class ReadinessResponse(BaseModel):
+    status: str = Field(description="Parser readiness status.", examples=["ready", "degraded"])
+    service: str = Field(description="Service identifier.", examples=["python-parser"])
+    parser_version: str = Field(alias="parserVersion", serialization_alias="parserVersion")
+    database: str = Field(
+        description="Database connectivity status.",
+        examples=["ok", "unavailable"],
+    )
+    engine_version: str = Field(alias="engineVersion", serialization_alias="engineVersion")
+    internal_auth_configured: str = Field(
+        alias="internalAuthConfigured",
+        serialization_alias="internalAuthConfigured",
+        description="Whether internal auth is configured without exposing the secret.",
+    )
+
+
 class ErrorResponse(BaseModel):
     status: str = Field(description="Error status.", examples=["error"])
     message: str = Field(
@@ -47,7 +63,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="TradeLab Python Parser API",
-        version="0.9.1-alpha.1",
+        version="0.9.2-alpha.1",
         description="Internal API for candle imports, strategy validation, and strategy execution.",
         docs_url="/docs",
         redoc_url="/redoc",
@@ -157,6 +173,39 @@ def create_app() -> FastAPI:
     )
     async def healthcheck() -> HealthResponse:
         return HealthResponse(status="ok", service="python-parser")
+
+    @app.get(
+        "/readiness",
+        response_model=ReadinessResponse,
+        tags=["health"],
+        summary="Check parser readiness",
+        description="Returns parser readiness without exposing secrets.",
+    )
+    async def readiness() -> ReadinessResponse:
+        database_status = "ok"
+        try:
+            connection = get_connection()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+            finally:
+                connection.close()
+        except AppError:
+            database_status = "unavailable"
+
+        internal_auth_status = (
+            "configured"
+            if settings.internal_shared_secret != "change-me-parser-internal-secret"
+            else "default-dev-secret"
+        )
+        return ReadinessResponse(
+            status="ready" if database_status == "ok" else "degraded",
+            service="python-parser",
+            parserVersion="0.9.2-alpha.1",
+            database=database_status,
+            engineVersion=ENGINE_VERSION,
+            internalAuthConfigured=internal_auth_status,
+        )
 
     @app.post(
         "/internal/import/candles",
