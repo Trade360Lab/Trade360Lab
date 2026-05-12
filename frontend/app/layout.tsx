@@ -7,8 +7,8 @@ export const metadata: Metadata = {
   title: "Trade360Lab",
   description: "Интерфейс исследования, запуска и сравнения торговых сценариев.",
   icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
+    icon: "/Favicon.svg",
+    shortcut: "/Favicon.svg",
   },
 };
 

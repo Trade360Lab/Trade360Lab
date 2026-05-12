@@ -82,7 +82,7 @@ export default function LoginPage() {
       <section className="grid w-full max-w-[1240px] overflow-hidden rounded-[30px] bg-white p-2 shadow-[0_34px_96px_rgba(20,24,22,0.16)] sm:rounded-[42px] lg:min-h-[760px] lg:grid-cols-[1.12fr_0.88fr]">
         <div className="relative min-h-[270px] overflow-hidden rounded-[24px] sm:min-h-[360px] sm:rounded-[34px] lg:min-h-full">
           <Image
-            src="/auth/trader-login.jpg"
+            src="/auth/Intro.png"
             alt=""
             fill
             sizes="(max-width: 1024px) 100vw, 560px"
