@@ -10,15 +10,15 @@
   }
 
   .glass-panel {
-    border: 1px solid hsl(var(--border) / 0.8);
+    border: 1px solid var(--tl-shell-border);
     background:
-      linear-gradient(180deg, hsl(var(--tl-glass-highlight) / 0.08), transparent 28%),
-      linear-gradient(155deg, hsl(var(--tl-bg-1) / 0.94), hsl(var(--tl-bg-2) / 0.9));
-    backdrop-filter: blur(20px);
+      linear-gradient(180deg, hsl(var(--tl-glass-highlight) / 0.07), transparent 30%),
+      linear-gradient(155deg, var(--tl-shell-surface), hsl(var(--tl-bg-0) / 0.92));
+    backdrop-filter: blur(12px);
     box-shadow:
-      inset 0 1px 0 hsl(var(--tl-glass-highlight) / 0.1),
-      0 24px 48px rgba(0, 0, 0, 0.42),
-      0 0 0 1px rgba(43, 213, 118, 0.07);
+      inset 0 1px 0 hsl(var(--tl-glass-highlight) / 0.09),
+      0 24px 60px var(--tl-shell-shadow),
+      0 0 0 1px rgba(255, 255, 255, 0.025);
   }
 }
 
@@ -41,13 +41,10 @@
     position: relative;
     background-color: var(--tl-body-solid);
     background-image:
-      radial-gradient(900px 540px at 18% -4%, hsl(var(--tl-glow) / 0.2), transparent 60%),
-      radial-gradient(820px 480px at 86% 0%, hsl(var(--tl-glow-soft) / 0.18), transparent 62%),
-      radial-gradient(900px 540px at 18% 104%, hsl(var(--tl-glow) / 0.2), transparent 60%),
-      radial-gradient(820px 480px at 86% 100%, hsl(var(--tl-glow-soft) / 0.18), transparent 62%),
-      radial-gradient(700px 420px at 50% 36%, hsl(var(--primary) / 0.08), transparent 68%),
+      radial-gradient(760px 460px at 18% -4%, hsl(var(--tl-glow) / 0.17), transparent 60%),
+      radial-gradient(720px 420px at 86% 0%, hsl(var(--tl-glow-soft) / 0.12), transparent 62%),
+      radial-gradient(620px 380px at 50% 36%, hsl(var(--primary) / 0.07), transparent 68%),
       linear-gradient(180deg, var(--tl-body-gradient-top) 0%, var(--tl-body-gradient-mid) 48%, var(--tl-body-gradient-bottom) 100%);
-    background-attachment: fixed;
   }
   body::before {
     content: "";
@@ -55,9 +52,7 @@
     inset: 0;
     pointer-events: none;
     background:
-      radial-gradient(640px 420px at 50% 20%, hsl(var(--tl-glow-soft) / 0.12), transparent 72%),
-      radial-gradient(640px 420px at 50% 80%, hsl(var(--tl-glow-soft) / 0.12), transparent 72%),
-      radial-gradient(520px 320px at 80% 75%, hsl(var(--tl-glow-warm) / 0.06), transparent 68%),
+      radial-gradient(560px 360px at 50% 20%, hsl(var(--tl-glow-soft) / 0.12), transparent 72%),
       linear-gradient(180deg, transparent 0%, var(--tl-body-overlay-bottom) 100%);
     z-index: 0;
   }
@@ -70,8 +65,8 @@
       linear-gradient(to right, var(--tl-grid-line-x) 1px, transparent 1px),
       linear-gradient(to bottom, var(--tl-grid-line-y) 1px, transparent 1px);
     background-size: 88px 88px;
-    mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.86), transparent 88%);
-    opacity: 0.38;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.72), transparent 86%);
+    opacity: 0.4;
     z-index: 0;
   }
   body > * {

@@ -3,61 +3,79 @@
 </p>
 <h1 align="center">Trade360Lab</h1>
 
-Trade360Lab — это монорепозиторий платформы для исследования, подготовки данных, запуска и сравнения торговых сценариев. Основной интерфейс находится во `frontend` и построен на Next.js: в нём собраны рабочее пространство, экран данных, бэктесты, карточки запусков и сравнение результатов. Папка `backend` содержит Java API и Python parser/backtesting сервис. В репозитории также есть `docs` с проектной документацией.
+Это монорепозиторий платформы для исследования, подготовки данных, запуска и сравнения торговых сценариев. Основной интерфейс находится во `frontend` и построен на Next.js: в нём собраны рабочее пространство, экран данных, бэктесты, карточки запусков и сравнение результатов. Папка `backend` содержит Java API и Python parser/backtesting сервис. В репозитории также есть `docs` с проектной документацией.
 
 <h2 align="center">Архитектура</h2>
 
 ```mermaid
 flowchart TB
-    A[Trade360Lab]
+    U[Пользователь] --> UI[Next.js App Router UI]
 
-    A --> F[Frontend]
-    A --> B[Backend]
-
-    %% Frontend
-    subgraph Frontend
+    subgraph Frontend["frontend/"]
         direction TB
-        F --> F1[Pages]
-        F --> F2[Reusable Components]
-        F --> F3[Charts & Visualization]
-        F --> F4[API Integration]
-        F --> F5[Strategy Upload]
+        UI --> Shell[Dashboard shell]
+        UI --> Auth[Login / Register]
+        UI --> Workspace[Workspace pages]
+        UI --> Proxy[Next.js API routes / proxy]
+        Shell --> Components[Shared UI components]
+        Workspace --> DataScreens[Data, Backtests, Strategies, Paper, Live, Bots]
     end
 
-    %% Backend
-    subgraph Backend
+    subgraph Backend["backend/"]
         direction TB
-        B --> J[Java API]
-        B --> D[(PostgreSQL)]
-        B --> P[Python Engine]
+        Java[Spring Boot Java API]
+        Python[FastAPI Python parser / engine]
+        DB[(PostgreSQL)]
     end
 
-    %% Java Layer
-    subgraph "Java API Layer"
+    subgraph JavaLayer["Java API layer"]
         direction TB
-        J --> J1[Controllers]
-        J --> J2[Services]
-        J --> J3[Dataset API]
-        J --> J4[Strategy Management]
-        J --> J5[Run Control]
+        Java --> Controllers[Controllers]
+        Java --> Services[Services]
+        Services --> DatasetApi[Dataset API]
+        Services --> StrategyApi[Strategy management]
+        Services --> RunApi[Run control]
+        Services --> TradingApi[Paper / Live trading API]
     end
 
-    %% Python Layer
-    subgraph "Python Engine Layer"
+    subgraph PythonLayer["Python engine layer"]
         direction TB
-        P --> P1[Parser]
-        P --> P2[Strategy Runner]
-        P --> P3[Backtesting]
-        P --> P4[Indicators]
-        P --> P5[Exchange Adapters]
+        Python --> Parser[Market data parser]
+        Python --> Runner[Strategy runner]
+        Python --> Backtesting[Backtesting]
+        Python --> Indicators[Indicators]
+        Python --> ExchangeAdapters[Exchange adapters]
     end
 
-    %% Data flow
-    F4 --> J
-    J --> D
-    J --> P
-    P --> D
+    Proxy --> Java
+    Java <--> DB
+    Java <--> Python
+    Python <--> DB
+```
 
+<h2 align="center">Процесс запуска бэктеста</h2>
+
+```mermaid
+sequenceDiagram
+    actor Trader as Трейдер
+    participant UI as Frontend UI
+    participant API as Next.js API proxy
+    participant Java as Java API
+    participant Py as Python engine
+    participant DB as PostgreSQL
+
+    Trader->>UI: Выбирает датасет, стратегию и параметры
+    UI->>API: POST /api/runs
+    API->>Java: Создать запуск
+    Java->>DB: Сохранить run со статусом queued
+    Java->>Py: Передать конфигурацию бэктеста
+    Py->>DB: Прочитать свечи и версию стратегии
+    Py-->>Java: Вернуть метрики, сделки и артефакты
+    Java->>DB: Обновить run, результаты и статус
+    UI->>API: GET /api/runs/[id]
+    API->>Java: Запросить актуальное состояние
+    Java-->>API: Run details
+    API-->>UI: Результаты для карточки запуска
 ```
 
 <h2 align="center">Текущая структура проекта</h2>

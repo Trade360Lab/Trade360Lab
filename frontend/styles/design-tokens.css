@@ -63,6 +63,10 @@
   --tl-grid-line-x: rgba(92, 240, 158, 0.05);
   --tl-grid-line-y: rgba(92, 240, 158, 0.03);
   --tl-body-overlay-bottom: rgba(0, 0, 0, 0.34);
+  --tl-shell-surface: rgba(12, 15, 24, 0.88);
+  --tl-shell-surface-muted: rgba(255, 255, 255, 0.035);
+  --tl-shell-border: rgba(148, 163, 184, 0.13);
+  --tl-shell-shadow: rgba(0, 0, 0, 0.46);
 }
 
 html[data-theme="white"] {
@@ -126,6 +130,10 @@ html[data-theme="white"] {
   --tl-grid-line-x: rgba(43, 213, 118, 0.065);
   --tl-grid-line-y: rgba(43, 213, 118, 0.04);
   --tl-body-overlay-bottom: rgba(255, 255, 255, 0.18);
+  --tl-shell-surface: rgba(255, 255, 255, 0.82);
+  --tl-shell-surface-muted: rgba(18, 28, 22, 0.035);
+  --tl-shell-border: rgba(31, 64, 45, 0.12);
+  --tl-shell-shadow: rgba(31, 64, 45, 0.16);
 }
 
 html[data-theme="graphite"] {
@@ -181,6 +189,10 @@ html[data-theme="graphite"] {
   --tl-grid-line-x: rgba(88, 186, 255, 0.06);
   --tl-grid-line-y: rgba(88, 186, 255, 0.035);
   --tl-body-overlay-bottom: rgba(0, 0, 0, 0.34);
+  --tl-shell-surface: rgba(12, 17, 27, 0.88);
+  --tl-shell-surface-muted: rgba(255, 255, 255, 0.035);
+  --tl-shell-border: rgba(148, 163, 184, 0.13);
+  --tl-shell-shadow: rgba(0, 0, 0, 0.46);
 }
 
 html[data-theme="amber"] {

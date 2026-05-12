@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { LanguageProvider } from "@/components/language/language-provider";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { AuthProvider, useAuth } from "@/features/auth/auth-provider";
 import { RunStoreProvider } from "@/features/runs/store/run-store";
@@ -20,10 +21,12 @@ function ScopedProviders({ children }: { children: ReactNode }) {
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <ScopedProviders>{children}</ScopedProviders>
-      </AuthProvider>
-    </ThemeProvider>
+    <LanguageProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ScopedProviders>{children}</ScopedProviders>
+        </AuthProvider>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }

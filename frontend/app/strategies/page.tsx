@@ -1,8 +1,9 @@
 "use client";
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { FileCode2, Upload } from "lucide-react";
+import { useLanguage } from "@/components/language/language-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,17 +51,13 @@ function statusVariant(status: string): BadgeVariant {
 }
 
 export default function StrategiesPage() {
+  const { language } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [templates, setTemplates] = useState<StrategyTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const activeCount = useMemo(
-    () => strategies.filter((strategy) => strategy.lifecycleStatus === "ACTIVE").length,
-    [strategies]
-  );
 
   async function load() {
     setIsLoading(true);
@@ -105,9 +102,7 @@ export default function StrategiesPage() {
   return (
     <div className="flex min-h-full flex-col gap-5">
       <PageHeader
-        eyebrow="Strategy Management"
-        title="Стратегии"
-        description={`${strategies.length} всего, ${activeCount} активных`}
+        title={language === "en" ? "Strategies" : "Стратегии"}
         actions={
           <>
             <input
