@@ -12,6 +12,11 @@ import type { AuthSession } from "@/features/auth/auth-storage";
 
 type AuthApiResponse = AuthSession;
 
+const socialLinks = {
+  telegram: "https://t.me/trading360l",
+  github: "https://github.com/AlexToday111/TradeLab.git",
+};
+
 async function readErrorMessage(response: Response) {
   try {
     const payload = (await response.json()) as { message?: string };
@@ -74,8 +79,8 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#ecefed] px-4 py-6 text-[#141716] sm:px-6 sm:py-8 lg:px-8">
-      <section className="grid w-full max-w-[1120px] overflow-hidden rounded-[30px] bg-white p-2 shadow-[0_32px_90px_rgba(20,24,22,0.14)] sm:rounded-[38px] lg:min-h-[680px] lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="relative min-h-[235px] overflow-hidden rounded-[24px] sm:min-h-[320px] sm:rounded-[32px] lg:min-h-full">
+      <section className="grid w-full max-w-[1240px] overflow-hidden rounded-[30px] bg-white p-2 shadow-[0_34px_96px_rgba(20,24,22,0.16)] sm:rounded-[42px] lg:min-h-[760px] lg:grid-cols-[1.12fr_0.88fr]">
+        <div className="relative min-h-[270px] overflow-hidden rounded-[24px] sm:min-h-[360px] sm:rounded-[34px] lg:min-h-full">
           <Image
             src="/auth/trader-login.jpg"
             alt=""
@@ -148,31 +153,6 @@ export default function LoginPage() {
                 </div>
               ) : null}
 
-              <div className="flex items-center gap-4 py-1 text-xs text-[#8c9490]">
-                <div className="h-px flex-1 bg-[#dfe4e1]" />
-                <span>or continue with</span>
-                <div className="h-px flex-1 bg-[#dfe4e1]" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-12 rounded-[14px] border-[#d8ddda] bg-white text-[#202522] shadow-none hover:bg-[#f5f7f6] hover:text-[#111413]"
-                >
-                  <Github className="h-4 w-4" />
-                  GitHub
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-12 rounded-[14px] border-[#d8ddda] bg-white text-[#202522] shadow-none hover:bg-[#f5f7f6] hover:text-[#111413]"
-                >
-                  <Send className="h-4 w-4" />
-                  Telegram
-                </Button>
-              </div>
-
               <Button
                 className="h-12 w-full rounded-full border-0 bg-[linear-gradient(135deg,#2bd576,#6ff7a3)] text-[#07110b] shadow-[0_16px_34px_rgba(43,213,118,0.24)] hover:brightness-105"
                 type="submit"
@@ -191,6 +171,27 @@ export default function LoginPage() {
                 Sign up
               </Link>
             </p>
+
+            <div className="mt-9 flex items-center justify-center gap-4">
+              <a
+                href={socialLinks.github}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d8ddda] bg-white text-[#202522] shadow-[0_10px_28px_rgba(20,24,22,0.08)] transition hover:-translate-y-0.5 hover:bg-[#f5f7f6] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2bd576]/45"
+                aria-label="GitHub"
+              >
+                <Github className="h-4 w-4" />
+              </a>
+              <a
+                href={socialLinks.telegram}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d8ddda] bg-white text-[#2aabee] shadow-[0_10px_28px_rgba(20,24,22,0.08)] transition hover:-translate-y-0.5 hover:bg-[#f5faff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2aabee]/35"
+                aria-label="Telegram"
+              >
+                <Send className="h-4 w-4" />
+              </a>
+            </div>
           </div>
         </div>
       </section>
