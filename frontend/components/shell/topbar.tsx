@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, Mail, Menu, Search, Send } from "lucide-react";
+import { Github, Mail, Menu, Send } from "lucide-react";
 import { useLanguage } from "@/components/language/language-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { navItems } from "@/components/shell/sidebar";
@@ -19,7 +19,6 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
   const text = {
     anonymous: isEnglish ? "Not signed in" : "Не авторизован",
     openNavigation: isEnglish ? "Open navigation" : "Открыть навигацию",
-    search: isEnglish ? "Search..." : "Поиск...",
     workspace: isEnglish ? "Workspace" : "Рабочая область",
   };
   const activeItem = navItems.find(
@@ -32,7 +31,7 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
     : text.workspace;
 
   return (
-    <header className="relative z-20 border-b border-[hsl(var(--tl-border-1)/0.42)] bg-[linear-gradient(180deg,rgba(15,18,28,0.82),rgba(9,12,18,0.58))] px-4 py-3 backdrop-blur-2xl md:px-5">
+    <header className="relative z-20 border-b border-[hsl(var(--tl-border-1)/0.42)] bg-[linear-gradient(180deg,hsl(var(--tl-bg-1)/0.86),hsl(var(--tl-bg-0)/0.58))] px-4 py-3 md:px-5">
       <div className="flex min-h-12 items-center gap-3">
         <button
           type="button"
@@ -57,11 +56,6 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
           <div className="mt-0.5 truncate text-lg font-semibold leading-tight text-foreground md:text-xl">
             {pageTitle}
           </div>
-        </div>
-
-        <div className="hidden min-w-[220px] max-w-[320px] flex-1 items-center gap-2 rounded-2xl border border-white/[0.07] bg-black/20 px-3 py-2 text-sm text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:flex">
-          <Search className="h-4 w-4 shrink-0" />
-          <span className="truncate">{text.search}</span>
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
