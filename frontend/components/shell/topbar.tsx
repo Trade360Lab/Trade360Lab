@@ -1,9 +1,18 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, Languages, LogOut, Mail, Settings2 } from "lucide-react";
+import {
+  Github,
+  Languages,
+  LogOut,
+  Mail,
+  Menu,
+  Search,
+  Settings2,
+  Send,
+} from "lucide-react";
+import { DemoModeBadge } from "@/components/shared/demo-mode-badge";
 import { interfaceLanguageOptions, useLanguage } from "@/components/language/language-provider";
 import { interfaceThemeOptions, useTheme } from "@/components/theme/theme-provider";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -18,7 +27,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-export function Topbar() {
+type TopbarProps = {
+  onOpenSidebar: () => void;
+};
+
+export function Topbar({ onOpenSidebar }: TopbarProps) {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
@@ -34,111 +47,86 @@ export function Topbar() {
     lightTheme: isEnglish ? "Light" : "Светлая",
     language: isEnglish ? "Interface language" : "Язык интерфейса",
     logout: isEnglish ? "Logout" : "Выйти",
+    openNavigation: isEnglish ? "Open navigation" : "Открыть навигацию",
+    search: isEnglish ? "Search..." : "Поиск...",
+    workspace: isEnglish ? "Workspace" : "Рабочая область",
   };
-  const primaryNavItems = navItems.filter(
-    (item) => !item.gated && item.href !== "/settings"
+  const activeItem = navItems.find(
+    (item) => pathname === item.href || (item.href !== "/workspace" && pathname.startsWith(`${item.href}/`))
   );
-  const isSettingsActive =
-    pathname === "/settings" || pathname.startsWith("/settings/");
+  const pageTitle = activeItem
+    ? isEnglish && activeItem.labelEn
+      ? activeItem.labelEn
+      : activeItem.label
+    : text.workspace;
 
   return (
-    <header className="relative z-20 border-b border-[hsl(var(--tl-border-1)/0.48)] bg-[linear-gradient(180deg,hsl(var(--tl-bg-1)/0.98),hsl(var(--tl-bg-0)/0.98))] px-4 py-4 md:px-6">
-      <div className="flex items-center gap-5">
-        <Link
-          href="/workspace"
-          className="group flex shrink-0 items-center px-1 py-1 transition-opacity duration-300 hover:opacity-90"
-          aria-label="TradeLab home"
+    <header className="relative z-20 border-b border-[hsl(var(--tl-border-1)/0.42)] bg-[linear-gradient(180deg,rgba(15,18,28,0.82),rgba(9,12,18,0.58))] px-4 py-3 backdrop-blur-2xl md:px-5">
+      <div className="flex min-h-12 items-center gap-3">
+        <button
+          type="button"
+          onClick={onOpenSidebar}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.035] text-muted-foreground transition-colors hover:bg-white/[0.07] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 md:hidden"
+          aria-label={text.openNavigation}
         >
-          <Image
-            src="/Logo.png"
-            alt="TradeLab logo"
-            width={240}
-            height={90}
-            className="h-[50px] w-auto origin-left scale-[1.15] object-contain md:h-[55px]"
-            priority
-          />
-        </Link>
+          <Menu className="h-5 w-5" />
+        </button>
 
-        <nav className="mx-auto flex min-w-0 flex-1 items-center justify-start gap-2 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:justify-center">
-          {primaryNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive =
-              pathname === item.href ||
-              (item.href !== "/workspace" && pathname.startsWith(`${item.href}/`));
-            const label = isEnglish && item.labelEn ? item.labelEn : item.label;
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2 text-[12px] text-muted-foreground">
+            <Link
+              href="/workspace"
+              className="transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
+            >
+              Trade360Lab
+            </Link>
+            <span className="text-muted-foreground/45">/</span>
+            <span className="truncate text-foreground">{pageTitle}</span>
+          </div>
+          <div className="mt-0.5 truncate text-lg font-semibold leading-tight text-foreground md:text-xl">
+            {pageTitle}
+          </div>
+        </div>
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "group flex h-10 shrink-0 items-center gap-2.5 rounded-full border px-4 text-[15px] font-semibold text-muted-foreground transition-all duration-200",
-                  isActive
-                    ? "border-[#c7ee51]/40 bg-[#c7ee51]/14 text-[#c7ee51] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
-                    : "border-transparent bg-transparent hover:border-[hsl(var(--tl-border-1)/0.46)] hover:bg-[hsl(var(--tl-bg-2)/0.78)] hover:text-foreground"
-                )}
-              >
-                {item.iconSrc ? (
-                  <Image
-                    src={item.iconSrc}
-                    alt=""
-                    width={18}
-                    height={18}
-                    className="h-[18px] w-[18px] shrink-0"
-                    aria-hidden="true"
-                  />
-                ) : Icon ? (
-                    <Icon
-                      className="h-[18px] w-[18px] shrink-0 text-[#c7ee51]"
-                    />
-                ) : null}
-                <span className="leading-none">{label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        <div className="hidden min-w-[220px] max-w-[320px] flex-1 items-center gap-2 rounded-2xl border border-white/[0.07] bg-black/20 px-3 py-2 text-sm text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:flex">
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="truncate">{text.search}</span>
+        </div>
 
-        <div className="ml-auto flex shrink-0 items-center gap-2.5">
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          <div className="hidden xl:block">
+            <DemoModeBadge />
+          </div>
+          <div className="hidden max-w-[210px] items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.035] px-3 py-2 text-xs text-muted-foreground lg:flex">
+            <Mail className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{session?.user.email ?? text.anonymous}</span>
+          </div>
           <a
             href="https://t.me/trading360l"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-muted-foreground transition-all duration-200 hover:border-[hsl(var(--tl-border-1)/0.52)] hover:bg-[hsl(var(--tl-bg-2)/0.82)] hover:text-foreground"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-transparent text-muted-foreground transition-colors hover:border-white/[0.08] hover:bg-white/[0.055] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
             aria-label="Telegram"
           >
-            <Image
-              src="/icons/Telegram--Streamline-Core.svg"
-              alt=""
-              width={24}
-              height={24}
-              className="h-6 w-6 shrink-0"
-              aria-hidden="true"
-            />
+            <Send className="h-4 w-4" />
           </a>
           <a
             href="https://github.com/AlexToday111/TradeLab.git"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-muted-foreground transition-all duration-200 hover:border-[hsl(var(--tl-border-1)/0.52)] hover:bg-[hsl(var(--tl-bg-2)/0.82)] hover:text-foreground"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-transparent text-muted-foreground transition-colors hover:border-white/[0.08] hover:bg-white/[0.055] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
             aria-label="GitHub"
           >
-            <Github className="h-5 w-5" />
+            <Github className="h-4 w-4" />
           </a>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-muted-foreground transition-all duration-200 hover:border-[hsl(var(--tl-border-1)/0.52)] hover:bg-[hsl(var(--tl-bg-2)/0.82)] hover:text-foreground"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-transparent text-muted-foreground transition-colors hover:border-white/[0.08] hover:bg-white/[0.055] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
                 aria-label={text.interfaceSettings}
               >
-                <Image
-                  src="/icons/settings.svg"
-                  alt=""
-                  width={20}
-                  height={20}
-                  className="h-5 w-5 shrink-0"
-                  aria-hidden="true"
-                />
+                <Settings2 className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -227,18 +215,16 @@ export function Topbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          {isSettingsActive ? (
-            <Link
-              href="/settings"
-              className="inline-flex h-10 items-center rounded-[12px] border border-[hsl(var(--primary)/0.18)] bg-[hsl(var(--primary)/0.08)] px-4 text-[14px] font-medium text-foreground"
-            >
-              <Settings2 className="mr-2 h-[18px] w-[18px]" />
-              {text.settings}
-            </Link>
-          ) : null}
+          <button
+            type="button"
+            onClick={logout}
+            className="hidden h-10 items-center gap-2 rounded-2xl border border-transparent px-3 text-sm text-muted-foreground transition-colors hover:border-status-error/20 hover:bg-status-error/10 hover:text-status-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-error/50 sm:inline-flex"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden xl:inline">{text.logout}</span>
+          </button>
         </div>
       </div>
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,transparent,rgba(111,247,163,0.14),rgba(43,213,118,0.18),transparent)]" />
     </header>
   );
 }
