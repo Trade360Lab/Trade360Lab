@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { SurfaceCard } from "@/components/shared/surface-card";
 import { useRuns } from "@/features/runs/store/run-store";
 import { datasetVersions } from "@/lib/demo-data/datasets";
 import { projects } from "@/lib/demo-data/projects";
-import { getProjectRuns } from "@/lib/project-runs";
 
 const CHART_WIDTH = 560;
 const CHART_HEIGHT = 260;
@@ -114,35 +112,6 @@ export default function WorkspacePage() {
   const normalizedProjectPage = Math.min(projectPage, maxProjectPage);
   const canGoPrev = normalizedProjectPage > 0;
   const canGoNext = normalizedProjectPage < maxProjectPage;
-
-  const rankedProjects = useMemo(() => {
-    return projects
-      .map((project) => {
-        const projectRuns = getProjectRuns(runs, project.id);
-        if (projectRuns.length === 0) {
-          return {
-            project,
-            runCount: 0,
-            averagePnl: 0,
-          };
-        }
-
-        const averagePnl =
-          projectRuns.reduce((total, run) => total + run.metrics.pnl, 0) /
-          projectRuns.length;
-
-        return {
-          project,
-          runCount: projectRuns.length,
-          averagePnl,
-        };
-      })
-      .filter((item) => item.runCount > 0)
-      .sort((a, b) => b.averagePnl - a.averagePnl);
-  }, [runs]);
-
-  const topProjects = rankedProjects.slice(0, 3);
-  const worstProjects = [...rankedProjects].reverse().slice(0, 3);
 
   const translateX = useMemo(
     () => `translateX(-${(normalizedProjectPage * 100) / projectsPerView}%)`,
@@ -358,113 +327,21 @@ export default function WorkspacePage() {
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="overflow-hidden rounded-[18px] border border-border/80 bg-[linear-gradient(180deg,hsl(var(--tl-bg-1)/0.98),hsl(var(--tl-bg-2)/0.92))]">
-          <div className="grid grid-cols-2 border-b border-border/70 bg-[linear-gradient(135deg,hsl(var(--tl-glow)/0.22),hsl(var(--tl-glow-soft)/0.16))] text-foreground/90">
-            <div className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.14em]">
-              Лучшие проекты
-            </div>
-            <div className="px-4 py-3 text-left text-[11px] font-medium uppercase tracking-[0.14em]">
-              Худшие проекты
-            </div>
-          </div>
-          <div className="grid gap-4 p-4 md:grid-cols-2">
-            <div className="space-y-2">
-              {topProjects.length === 0 ? (
-                <div className="rounded-[12px] border border-border/70 bg-[hsl(var(--tl-bg-1)/0.64)] px-3 py-3 text-xs text-muted-foreground">
-                  Пока нет данных по запускам.
-                </div>
-              ) : (
-                topProjects.map((item) => (
-                  <div
-                    key={`top-${item.project.id}`}
-                    className="flex items-center justify-between rounded-[12px] border border-border/70 bg-[hsl(var(--tl-bg-1)/0.64)] px-3 py-2"
-                  >
-                    <div>
-                      <div className="text-sm font-medium text-foreground">
-                        {item.project.name}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {item.runCount} запусков
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-semibold text-status-success">
-                        +{item.averagePnl.toFixed(1)}%
-                      </div>
-                      <Button
-                        asChild
-                        size="sm"
-                        variant="secondary"
-                        className="mt-1 h-6 rounded-full px-2.5 text-[11px]"
-                      >
-                        <Link href={`/desktop?project=${item.project.id}`}>Открыть</Link>
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <div className="space-y-2">
-              {worstProjects.length === 0 ? (
-                <div className="rounded-[12px] border border-border/70 bg-[hsl(var(--tl-bg-1)/0.64)] px-3 py-3 text-xs text-muted-foreground">
-                  Пока нет данных по запускам.
-                </div>
-              ) : (
-                worstProjects.map((item) => (
-                  <div
-                    key={`worst-${item.project.id}`}
-                    className="flex items-center justify-between rounded-[12px] border border-border/70 bg-[hsl(var(--tl-bg-1)/0.64)] px-3 py-2"
-                  >
-                    <div>
-                      <div className="text-sm font-medium text-foreground">
-                        {item.project.name}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {item.runCount} запусков
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div
-                        className={
-                          item.averagePnl >= 0
-                            ? "text-sm font-semibold text-status-success"
-                            : "text-sm font-semibold text-status-error"
-                        }
-                      >
-                        {item.averagePnl >= 0 ? "+" : ""}
-                        {item.averagePnl.toFixed(1)}%
-                      </div>
-                      <Button
-                        asChild
-                        size="sm"
-                        variant="secondary"
-                        className="mt-1 h-6 rounded-full px-2.5 text-[11px]"
-                      >
-                        <Link href={`/desktop?project=${item.project.id}`}>Открыть</Link>
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[18px] border border-border/80 bg-[linear-gradient(180deg,hsl(var(--tl-bg-1)/0.98),hsl(var(--tl-bg-2)/0.92))] p-4">
-          <div className="mb-2 border-b border-[hsl(var(--tl-glow)/0.45)] pb-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+      <div className="rounded-[18px] border border-border/80 bg-[linear-gradient(180deg,hsl(var(--tl-bg-1)/0.98),hsl(var(--tl-bg-2)/0.92))] p-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+          <div className="shrink-0 border-b border-[hsl(var(--tl-glow)/0.45)] pb-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground lg:w-[180px] lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
             Курсы валют
           </div>
-          <div className="mt-3 space-y-2 rounded-[14px] border border-[hsl(var(--tl-glow)/0.32)] bg-[linear-gradient(160deg,hsl(var(--tl-glow)/0.18),hsl(var(--tl-glow-soft)/0.08)_58%,hsl(var(--tl-bg-1)/0.92))] p-2">
+          <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
             {fxRates.map((rate) => (
               <div
                 key={rate.pair}
-                className="flex items-center justify-between rounded-[12px] border border-border/70 bg-[hsl(var(--tl-bg-1)/0.64)] px-3 py-2"
+                className="flex min-w-0 items-center justify-between rounded-[14px] border border-[hsl(var(--tl-glow)/0.24)] bg-[linear-gradient(160deg,hsl(var(--tl-glow)/0.14),hsl(var(--tl-bg-1)/0.74))] px-4 py-3"
               >
                 <div className="text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
                   {rate.pair}
                 </div>
-                <div className="font-mono text-sm text-foreground">{rate.value}</div>
+                <div className="font-mono text-base font-semibold text-foreground">{rate.value}</div>
               </div>
             ))}
           </div>
