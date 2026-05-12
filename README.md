@@ -53,6 +53,24 @@ flowchart TB
     Python <--> DB
 ```
 
+<h2 align="center">Текущая структура проекта</h2>
+
+```text
+Trade360Lab/
+|-- frontend/               # Next.js приложение (UI + API proxy)
+|   |-- app/
+|   |-- components/
+|   |-- features/
+|   |-- lib/
+|   `-- public/
+|-- backend/
+|   |-- java/               # Spring Boot API
+|   `-- python/             # FastAPI parser/import service
+|-- docs/                   # Проектная документация
+|-- .github/workflows/      # CI пайплайн
+`-- docker-compose.yml      # Оркестрация всего стека
+```
+
 <h2 align="center">Процесс запуска бэктеста</h2>
 
 ```mermaid
@@ -78,23 +96,6 @@ sequenceDiagram
     API-->>UI: Результаты для карточки запуска
 ```
 
-<h2 align="center">Текущая структура проекта</h2>
-
-```text
-Trade360Lab/
-|-- frontend/               # Next.js приложение (UI + API proxy)
-|   |-- app/
-|   |-- components/
-|   |-- features/
-|   |-- lib/
-|   `-- public/
-|-- backend/
-|   |-- java/               # Spring Boot API
-|   `-- python/             # FastAPI parser/import service
-|-- docs/                   # Проектная документация
-|-- .github/workflows/      # CI пайплайн
-`-- docker-compose.yml      # Оркестрация всего стека
-```
 
 <h2 align="center">Быстрый старт</h2>
 
