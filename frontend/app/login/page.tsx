@@ -73,9 +73,9 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#ecefed] px-4 py-8 text-[#141716] sm:px-6 lg:px-8">
-      <section className="grid w-full max-w-[1120px] overflow-hidden rounded-[38px] bg-white p-2 shadow-[0_32px_90px_rgba(20,24,22,0.14)] lg:min-h-[680px] lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="relative min-h-[280px] overflow-hidden rounded-[32px] lg:min-h-full">
+    <main className="flex min-h-screen items-center justify-center bg-[#ecefed] px-4 py-6 text-[#141716] sm:px-6 sm:py-8 lg:px-8">
+      <section className="grid w-full max-w-[1120px] overflow-hidden rounded-[30px] bg-white p-2 shadow-[0_32px_90px_rgba(20,24,22,0.14)] sm:rounded-[38px] lg:min-h-[680px] lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="relative min-h-[235px] overflow-hidden rounded-[24px] sm:min-h-[320px] sm:rounded-[32px] lg:min-h-full">
           <Image
             src="/auth/trader-login.jpg"
             alt=""
@@ -86,13 +86,13 @@ export default function LoginPage() {
           />
         </div>
 
-        <div className="flex min-h-[560px] items-center justify-center px-6 py-10 sm:px-10 lg:px-14">
+        <div className="flex min-h-[500px] items-center justify-center px-6 py-9 sm:px-10 sm:py-10 lg:min-h-[560px] lg:px-14">
           <div className="w-full max-w-[380px]">
-            <div className="mb-12">
+            <div className="mb-10 sm:mb-12">
               <div className="text-[13px] font-semibold uppercase tracking-[0.24em] text-[#2a322f]">
                 Trade360Lab
               </div>
-              <h1 className="mt-16 text-center text-5xl font-semibold tracking-tight text-[#111413] sm:text-[56px]">
+              <h1 className="mt-10 text-center text-4xl font-semibold tracking-tight text-[#111413] sm:mt-14 sm:text-[52px] lg:mt-16 lg:text-[56px]">
                 Hi Trader
               </h1>
               <p className="mt-4 text-center text-sm font-medium text-[#68706c]">
