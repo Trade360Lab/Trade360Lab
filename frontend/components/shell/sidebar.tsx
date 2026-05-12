@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   Database,
   FileCode2,
-  HelpCircle,
   Home,
   Languages,
   Laptop,
@@ -240,15 +239,6 @@ export function Sidebar({
         </nav>
 
         <div className="relative shrink-0 border-t border-[hsl(var(--tl-border-1)/0.44)] pt-4">
-          <a
-            href="https://t.me/trading360l"
-            target="_blank"
-            rel="noreferrer"
-            className="mb-2 flex items-center gap-3 rounded-[16px] border border-transparent px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:border-white/[0.08] hover:bg-white/[0.04] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70"
-          >
-            <HelpCircle className="h-4 w-4" />
-            <span>{isEnglish ? "Support" : "Поддержка"}</span>
-          </a>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button

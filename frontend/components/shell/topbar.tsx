@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, Mail, Menu, Send } from "lucide-react";
+import { Github, Menu, Send } from "lucide-react";
 import { useLanguage } from "@/components/language/language-provider";
-import { useAuth } from "@/features/auth/auth-provider";
 import { navItems } from "@/components/shell/sidebar";
 
 type TopbarProps = {
@@ -14,10 +13,8 @@ type TopbarProps = {
 export function Topbar({ onOpenSidebar }: TopbarProps) {
   const pathname = usePathname();
   const { language } = useLanguage();
-  const { session } = useAuth();
   const isEnglish = language === "en";
   const text = {
-    anonymous: isEnglish ? "Not signed in" : "Не авторизован",
     openNavigation: isEnglish ? "Open navigation" : "Открыть навигацию",
     workspace: isEnglish ? "Workspace" : "Рабочая область",
   };
@@ -59,10 +56,6 @@ export function Topbar({ onOpenSidebar }: TopbarProps) {
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <div className="hidden max-w-[210px] items-center gap-2 rounded-2xl border border-white/[0.07] bg-white/[0.035] px-3 py-2 text-xs text-muted-foreground lg:flex">
-            <Mail className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{session?.user.email ?? text.anonymous}</span>
-          </div>
           <a
             href="https://t.me/trading360l"
             target="_blank"
