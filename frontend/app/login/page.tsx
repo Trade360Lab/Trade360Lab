@@ -55,6 +55,10 @@ export default function LoginPage() {
       }
 
       const session = (await response.json()) as AuthApiResponse;
+      window.sessionStorage.setItem(
+        "tradelab.auth-success",
+        JSON.stringify({ email: session.user.email })
+      );
       login(session);
       router.replace("/workspace");
     } catch (submissionError) {

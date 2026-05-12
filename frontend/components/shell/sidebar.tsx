@@ -150,8 +150,6 @@ export function Sidebar({
   const { language, setLanguage } = useLanguage();
   const { session, logout } = useAuth();
   const isEnglish = language === "en";
-  const displayName = session?.user.email?.split("@")[0] ?? (isEnglish ? "Trader" : "Трейдер");
-  const accountLabel = session?.user.email ?? (isEnglish ? "Signed in workspace" : "Рабочая сессия активна");
   const settingsText = {
     settings: isEnglish ? "Settings" : "Настройки",
     account: isEnglish ? "Account" : "Аккаунт",
@@ -200,17 +198,6 @@ export function Sidebar({
               <ChevronLeft className="h-4 w-4" />
             </button>
           ) : null}
-        </div>
-
-        <div className="relative mt-4 overflow-hidden rounded-[22px] border border-white/[0.07] bg-[linear-gradient(145deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.18),transparent)]" />
-          <div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            {isEnglish ? "Welcome Back" : "С возвращением"}
-          </div>
-          <div className="mt-2 truncate text-xl font-semibold leading-tight text-foreground">
-            {displayName}
-          </div>
-          <div className="mt-1 truncate text-xs text-muted-foreground">{accountLabel}</div>
         </div>
 
         <nav className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
