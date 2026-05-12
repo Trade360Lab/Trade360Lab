@@ -22,21 +22,25 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   {
     label: "\u0413\u043b\u0430\u0432\u043d\u043e\u0435",
+    labelEn: "Home",
     href: "/workspace",
     iconSrc: "/icons/Home-4--Streamline-Core.svg",
   },
   {
     label: "\u0420\u0430\u0431\u043e\u0447\u0438\u0439 \u0441\u0442\u043e\u043b",
+    labelEn: "Workspace",
     href: "/desktop",
     iconSrc: "/icons/Screen-1--Streamline-Core.svg",
   },
   {
     label: "\u0414\u0430\u043d\u043d\u044b\u0435",
+    labelEn: "Data",
     href: "/data",
     iconSrc: "/icons/Database--Streamline-Core.svg",
   },
   {
     label: "\u0411\u044d\u043a\u0442\u0435\u0441\u0442\u044b",
+    labelEn: "Backtests",
     href: "/backtests",
     iconSrc: "/icons/Bag-Suitcase-1--Streamline-Core.svg",
   },
@@ -59,23 +63,21 @@ export const navItems: NavItem[] = [
     icon: RadioTower,
   },
   {
-    label: "\u0418\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u043d\u0438\u044f",
-    href: "/research",
-    iconSrc: "/icons/Pencil--Streamline-Core.svg",
-  },
-  {
     label: "\u0411\u043e\u0442\u044b",
+    labelEn: "Bots",
     href: "/bots",
     iconSrc: "/bot.png",
   },
   {
     label: "\u0414\u0435\u043f\u043b\u043e\u0439",
+    labelEn: "Deploy",
     href: "/deploy",
     icon: Rocket,
     gated: true,
   },
   {
     label: "\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438",
+    labelEn: "Settings",
     href: "/settings",
     icon: Settings,
   },
@@ -99,7 +101,6 @@ export function Sidebar() {
               const isActive =
                 pathname === item.href ||
                 (item.href !== "/workspace" && pathname.startsWith(`${item.href}/`));
-              const isTradingItem = ["/strategies", "/paper", "/live"].includes(item.href);
               const label = language === "en" && item.labelEn ? item.labelEn : item.label;
 
               return (
@@ -110,8 +111,6 @@ export function Sidebar() {
                     "group flex items-center gap-3 rounded-xl border border-transparent px-3 py-2 text-sm transition-all duration-300",
                     isActive
                       ? "border-[hsl(var(--primary)/0.34)] bg-[linear-gradient(135deg,hsl(var(--primary)/0.18),hsl(var(--accent)/0.1))] text-foreground shadow-[0_0_18px_hsl(var(--primary)/0.14)]"
-                      : isTradingItem
-                        ? "border-[#c7ee51]/24 bg-[#c7ee51]/8 text-[#c7ee51] hover:border-[#c7ee51]/40 hover:bg-[#c7ee51]/14"
                       : "text-muted-foreground hover:border-[hsl(var(--tl-border-1)/0.8)] hover:bg-[hsl(var(--tl-bg-2)/0.78)] hover:text-foreground"
                   )}
                 >
@@ -128,7 +127,7 @@ export function Sidebar() {
                     <Icon
                       className={cn(
                         "h-4 w-4 shrink-0 transition-transform duration-300 group-hover:scale-110",
-                        isTradingItem && "text-[#c7ee51]"
+                        isActive ? "text-[#c7ee51]" : "text-muted-foreground group-hover:text-foreground"
                       )}
                     />
                   ) : null}

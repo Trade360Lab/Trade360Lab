@@ -23,6 +23,18 @@ export function Topbar() {
   const { theme, setTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
   const { session, logout } = useAuth();
+  const isEnglish = language === "en";
+  const text = {
+    settings: isEnglish ? "Settings" : "Настройки",
+    interfaceSettings: isEnglish ? "Interface settings" : "Настройки интерфейса",
+    account: isEnglish ? "Account" : "Аккаунт",
+    anonymous: isEnglish ? "Not signed in" : "Не авторизован",
+    theme: isEnglish ? "Interface theme" : "Тема интерфейса",
+    darkTheme: isEnglish ? "Dark" : "Тёмная",
+    lightTheme: isEnglish ? "Light" : "Светлая",
+    language: isEnglish ? "Interface language" : "Язык интерфейса",
+    logout: isEnglish ? "Logout" : "Выйти",
+  };
   const primaryNavItems = navItems.filter(
     (item) => !item.gated && item.href !== "/settings"
   );
@@ -53,8 +65,7 @@ export function Topbar() {
             const isActive =
               pathname === item.href ||
               (item.href !== "/workspace" && pathname.startsWith(`${item.href}/`));
-            const isTradingItem = ["/strategies", "/paper", "/live"].includes(item.href);
-            const label = language === "en" && item.labelEn ? item.labelEn : item.label;
+            const label = isEnglish && item.labelEn ? item.labelEn : item.label;
 
             return (
               <Link
@@ -64,8 +75,6 @@ export function Topbar() {
                   "group flex h-10 shrink-0 items-center gap-2.5 rounded-full border px-4 text-[15px] font-semibold text-muted-foreground transition-all duration-200",
                   isActive
                     ? "border-[#c7ee51]/40 bg-[#c7ee51]/14 text-[#c7ee51] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
-                    : isTradingItem
-                      ? "border-[#c7ee51]/24 bg-[#c7ee51]/8 text-[#c7ee51] hover:border-[#c7ee51]/40 hover:bg-[#c7ee51]/14"
                     : "border-transparent bg-transparent hover:border-[hsl(var(--tl-border-1)/0.46)] hover:bg-[hsl(var(--tl-bg-2)/0.78)] hover:text-foreground"
                 )}
               >
@@ -80,12 +89,7 @@ export function Topbar() {
                   />
                 ) : Icon ? (
                     <Icon
-                      className={cn(
-                        "h-[18px] w-[18px] shrink-0",
-                        isActive || isTradingItem
-                          ? "text-[#c7ee51]"
-                          : "text-muted-foreground group-hover:text-foreground"
-                      )}
+                      className="h-[18px] w-[18px] shrink-0 text-[#c7ee51]"
                     />
                 ) : null}
                 <span className="leading-none">{label}</span>
@@ -125,7 +129,7 @@ export function Topbar() {
               <button
                 type="button"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-transparent text-muted-foreground transition-all duration-200 hover:border-[hsl(var(--tl-border-1)/0.52)] hover:bg-[hsl(var(--tl-bg-2)/0.82)] hover:text-foreground"
-                aria-label="Настройки интерфейса"
+                aria-label={text.interfaceSettings}
               >
                 <Image
                   src="/icons/settings.svg"
@@ -143,20 +147,20 @@ export function Topbar() {
               className="w-[320px] border-[hsl(var(--primary)/0.16)] bg-[linear-gradient(160deg,hsl(var(--popover)/0.98),hsl(var(--tl-bg-2)/0.95))] p-2"
             >
               <DropdownMenuLabel className="px-3 pt-2 text-base text-foreground">
-                Настройки
+                {text.settings}
               </DropdownMenuLabel>
               <div className="mx-1 mb-2 mt-1 rounded-[12px] border border-[hsl(var(--tl-border-1)/0.52)] bg-[hsl(var(--tl-bg-2)/0.72)] px-3 py-2.5">
                 <div className="mb-1 flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground/80">
                   <Mail className="h-3.5 w-3.5" />
-                  Аккаунт
+                  {text.account}
                 </div>
                 <div className="truncate text-sm font-medium text-foreground">
-                  {session?.user.email ?? "Не авторизован"}
+                  {session?.user.email ?? text.anonymous}
                 </div>
               </div>
               <DropdownMenuSeparator className="bg-border/80" />
               <div className="px-3 pb-2 pt-1 text-[11px] uppercase tracking-[0.22em] text-muted-foreground/80">
-                Тема интерфейса
+                {text.theme}
               </div>
               <div className="space-y-1 px-1 pb-1">
                 {interfaceThemeOptions.map((option) => {
@@ -183,20 +187,14 @@ export function Topbar() {
                           "bg-[#c9ef4e]/12 text-[#C9EF4E] focus:bg-[#c9ef4e]/12 focus:text-[#C9EF4E]"
                       )}
                     >
-                      <span>
-                        {language === "en"
-                          ? option.label
-                          : option.value === "black"
-                            ? "Тёмная"
-                            : "Светлая"}
-                      </span>
+                      <span>{option.value === "black" ? text.darkTheme : text.lightTheme}</span>
                     </DropdownMenuItem>
                   );
                 })}
               </div>
               <DropdownMenuSeparator className="bg-border/80" />
               <div className="px-3 pb-2 pt-1 text-[11px] uppercase tracking-[0.22em] text-muted-foreground/80">
-                Язык интерфейса
+                {text.language}
               </div>
               <div className="grid grid-cols-2 gap-1 px-1 pb-1">
                 {interfaceLanguageOptions.map((option) => {
@@ -225,7 +223,7 @@ export function Topbar() {
                 className="mx-1 cursor-pointer rounded-[12px] px-3 py-2.5 text-sm font-medium text-muted-foreground focus:bg-status-error/10 focus:text-status-error"
               >
                 <LogOut className="h-4 w-4" />
-                {language === "en" ? "Logout" : "Выйти"}
+                {text.logout}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -235,7 +233,7 @@ export function Topbar() {
               className="inline-flex h-10 items-center rounded-[12px] border border-[hsl(var(--primary)/0.18)] bg-[hsl(var(--primary)/0.08)] px-4 text-[14px] font-medium text-foreground"
             >
               <Settings2 className="mr-2 h-[18px] w-[18px]" />
-              {"\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438"}
+              {text.settings}
             </Link>
           ) : null}
         </div>
