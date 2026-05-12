@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, Settings2 } from "lucide-react";
+import { Github, LogOut, Mail, Settings2 } from "lucide-react";
 import { interfaceThemeOptions, useTheme } from "@/components/theme/theme-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { navItems } from "@/components/shell/sidebar";
@@ -87,16 +87,6 @@ export function Topbar() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2.5">
-          <div className="hidden items-center rounded-full border border-[hsl(var(--tl-border-1)/0.52)] bg-[hsl(var(--tl-bg-2)/0.82)] px-4 py-2 text-sm text-foreground lg:flex">
-            {session?.user.email}
-          </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="inline-flex h-10 items-center rounded-full border border-transparent px-4 text-[14px] font-medium text-muted-foreground transition-all duration-200 hover:border-[hsl(var(--tl-border-1)/0.52)] hover:bg-[hsl(var(--tl-bg-2)/0.82)] hover:text-foreground"
-          >
-            Logout
-          </button>
           <a
             href="https://t.me/trading360l"
             target="_blank"
@@ -147,8 +137,14 @@ export function Topbar() {
               <DropdownMenuLabel className="px-3 pt-2 text-base text-foreground">
                 Настройки
               </DropdownMenuLabel>
-              <div className="px-3 pb-2 text-xs text-muted-foreground">
-                Пока здесь доступен только выбор темы интерфейса.
+              <div className="mx-1 mb-2 mt-1 rounded-[12px] border border-[hsl(var(--tl-border-1)/0.52)] bg-[hsl(var(--tl-bg-2)/0.72)] px-3 py-2.5">
+                <div className="mb-1 flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground/80">
+                  <Mail className="h-3.5 w-3.5" />
+                  Аккаунт
+                </div>
+                <div className="truncate text-sm font-medium text-foreground">
+                  {session?.user.email ?? "Не авторизован"}
+                </div>
               </div>
               <DropdownMenuSeparator className="bg-border/80" />
               <div className="px-3 pb-2 pt-1 text-[11px] uppercase tracking-[0.22em] text-muted-foreground/80">
@@ -184,6 +180,14 @@ export function Topbar() {
                   );
                 })}
               </div>
+              <DropdownMenuSeparator className="bg-border/80" />
+              <DropdownMenuItem
+                onSelect={logout}
+                className="mx-1 cursor-pointer rounded-[12px] px-3 py-2.5 text-sm font-medium text-muted-foreground focus:bg-status-error/10 focus:text-status-error"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           {isSettingsActive ? (
