@@ -48,7 +48,7 @@ const navGroups: Array<{
   labelEn: string;
 }> = [
   { key: "overview", label: "Обзор", labelEn: "Overview" },
-  { key: "research", label: "Исследование", labelEn: "Research" },
+  { key: "research", label: "Лаборатория", labelEn: "Trading Lab" },
   { key: "automation", label: "Автоматизация", labelEn: "Automation" },
   { key: "system", label: "Система", labelEn: "System" },
 ];

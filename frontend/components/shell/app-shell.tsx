@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { useLanguage } from "@/components/language/language-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { Topbar } from "@/components/shell/topbar";
 import { Sidebar } from "@/components/shell/sidebar";
@@ -10,6 +11,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, isReady } = useAuth();
+  const { language } = useLanguage();
   const isAuthPage = pathname === "/login" || pathname === "/register";
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
@@ -27,7 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!isReady || !isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
-        Loading session...
+        {language === "en" ? "Loading session..." : "Загрузка сессии..."}
       </div>
     );
   }
