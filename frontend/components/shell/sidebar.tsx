@@ -166,7 +166,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "relative flex h-full min-h-0 flex-col overflow-hidden border-r border-[hsl(var(--tl-border-1)/0.44)] bg-[linear-gradient(180deg,hsl(var(--tl-bg-1)/0.96),hsl(var(--tl-bg-0)/0.94))] shadow-[inset_1px_0_0_rgba(255,255,255,0.05),inset_-1px_0_0_rgba(255,255,255,0.035)] backdrop-blur-2xl transition-transform duration-300",
+        "relative flex h-full min-h-0 flex-col overflow-hidden border-r border-[hsl(var(--tl-border-1)/0.44)] bg-[linear-gradient(180deg,hsl(var(--tl-bg-1)/0.96),hsl(var(--tl-bg-0)/0.94))] shadow-[inset_1px_0_0_rgba(255,255,255,0.05),inset_-1px_0_0_rgba(255,255,255,0.035)] backdrop-blur-md transition-transform duration-300",
         variant === "mobile" && "rounded-[26px] border border-[hsl(var(--tl-border-1)/0.58)] shadow-[0_24px_80px_rgba(0,0,0,0.52)]",
         className
       )}
