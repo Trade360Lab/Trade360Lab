@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Github, Settings2 } from "lucide-react";
-import { DemoModeBadge } from "@/components/shared/demo-mode-badge";
 import { interfaceThemeOptions, useTheme } from "@/components/theme/theme-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { navItems } from "@/components/shell/sidebar";
@@ -88,9 +87,6 @@ export function Topbar() {
         </nav>
 
         <div className="ml-auto flex shrink-0 items-center gap-2.5">
-          <div className="hidden lg:block">
-            <DemoModeBadge />
-          </div>
           <div className="hidden items-center rounded-full border border-[hsl(var(--tl-border-1)/0.52)] bg-[hsl(var(--tl-bg-2)/0.82)] px-4 py-2 text-sm text-foreground lg:flex">
             {session?.user.email}
           </div>
