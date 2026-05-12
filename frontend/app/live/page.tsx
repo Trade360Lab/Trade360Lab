@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Square,
 } from "lucide-react";
+import { useLanguage } from "@/components/language/language-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -189,6 +190,7 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 export default function LiveTradingPage() {
+  const { language } = useLanguage();
   const [credentials, setCredentials] = useState<LiveCredential[]>([]);
   const [sessions, setSessions] = useState<LiveSession[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
@@ -363,13 +365,11 @@ export default function LiveTradingPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-auto p-4 md:p-6">
       <PageHeader
-        eyebrow="Live trading"
-        title="Live Trading"
-        description="Controlled live execution with credentials, risk checks, circuit breakers, and emergency stop."
+        title={language === "en" ? "Live Trading" : "Реальная торговля"}
         actions={
           <Button variant="secondary" size="sm" onClick={refreshAll} disabled={isLoading}>
             <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+            {language === "en" ? "Refresh" : "Обновить"}
           </Button>
         }
       />

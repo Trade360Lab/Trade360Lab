@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Github, LogOut, Mail, Settings2 } from "lucide-react";
+import { Github, Languages, LogOut, Mail, Settings2 } from "lucide-react";
+import { interfaceLanguageOptions, useLanguage } from "@/components/language/language-provider";
 import { interfaceThemeOptions, useTheme } from "@/components/theme/theme-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { navItems } from "@/components/shell/sidebar";
@@ -20,6 +21,7 @@ import { cn } from "@/lib/utils";
 export function Topbar() {
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
+  const { language, setLanguage } = useLanguage();
   const { session, logout } = useAuth();
   const primaryNavItems = navItems.filter(
     (item) => !item.gated && item.href !== "/settings"
@@ -51,6 +53,8 @@ export function Topbar() {
             const isActive =
               pathname === item.href ||
               (item.href !== "/workspace" && pathname.startsWith(`${item.href}/`));
+            const isTradingItem = ["/strategies", "/paper", "/live"].includes(item.href);
+            const label = language === "en" && item.labelEn ? item.labelEn : item.label;
 
             return (
               <Link
@@ -60,6 +64,8 @@ export function Topbar() {
                   "group flex h-10 shrink-0 items-center gap-2.5 rounded-full border px-4 text-[15px] font-semibold text-muted-foreground transition-all duration-200",
                   isActive
                     ? "border-[#c7ee51]/40 bg-[#c7ee51]/14 text-[#c7ee51] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
+                    : isTradingItem
+                      ? "border-[#c7ee51]/24 bg-[#c7ee51]/8 text-[#c7ee51] hover:border-[#c7ee51]/40 hover:bg-[#c7ee51]/14"
                     : "border-transparent bg-transparent hover:border-[hsl(var(--tl-border-1)/0.46)] hover:bg-[hsl(var(--tl-bg-2)/0.78)] hover:text-foreground"
                 )}
               >
@@ -76,11 +82,13 @@ export function Topbar() {
                     <Icon
                       className={cn(
                         "h-[18px] w-[18px] shrink-0",
-                        isActive ? "text-[#c7ee51]" : "text-muted-foreground group-hover:text-foreground"
+                        isActive || isTradingItem
+                          ? "text-[#c7ee51]"
+                          : "text-muted-foreground group-hover:text-foreground"
                       )}
                     />
                 ) : null}
-                <span className="leading-none">{item.label}</span>
+                <span className="leading-none">{label}</span>
               </Link>
             );
           })}
@@ -175,7 +183,38 @@ export function Topbar() {
                           "bg-[#c9ef4e]/12 text-[#C9EF4E] focus:bg-[#c9ef4e]/12 focus:text-[#C9EF4E]"
                       )}
                     >
-                      <span>{option.label}</span>
+                      <span>
+                        {language === "en"
+                          ? option.label
+                          : option.value === "black"
+                            ? "Тёмная"
+                            : "Светлая"}
+                      </span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </div>
+              <DropdownMenuSeparator className="bg-border/80" />
+              <div className="px-3 pb-2 pt-1 text-[11px] uppercase tracking-[0.22em] text-muted-foreground/80">
+                Язык интерфейса
+              </div>
+              <div className="grid grid-cols-2 gap-1 px-1 pb-1">
+                {interfaceLanguageOptions.map((option) => {
+                  const isSelected = option.value === language;
+
+                  return (
+                    <DropdownMenuItem
+                      key={option.value}
+                      onSelect={() => setLanguage(option.value)}
+                      className={cn(
+                        "justify-center rounded-[12px] px-3 py-2.5 text-sm font-semibold focus:bg-[hsl(var(--tl-bg-2)/0.9)]",
+                        isSelected
+                          ? "bg-[#c9ef4e]/12 text-[#C9EF4E] focus:bg-[#c9ef4e]/12 focus:text-[#C9EF4E]"
+                          : "cursor-pointer text-foreground/80"
+                      )}
+                    >
+                      <Languages className="h-4 w-4" />
+                      {option.label}
                     </DropdownMenuItem>
                   );
                 })}
@@ -186,7 +225,7 @@ export function Topbar() {
                 className="mx-1 cursor-pointer rounded-[12px] px-3 py-2.5 text-sm font-medium text-muted-foreground focus:bg-status-error/10 focus:text-status-error"
               >
                 <LogOut className="h-4 w-4" />
-                Logout
+                {language === "en" ? "Logout" : "Выйти"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

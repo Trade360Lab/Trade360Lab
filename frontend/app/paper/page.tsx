@@ -2,6 +2,7 @@
 
 import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { Pause, Play, Plus, RefreshCw, Square, XCircle } from "lucide-react";
+import { useLanguage } from "@/components/language/language-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -147,6 +148,7 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 export default function PaperTradingPage() {
+  const { language } = useLanguage();
   const [sessions, setSessions] = useState<PaperSession[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [orders, setOrders] = useState<PaperOrder[]>([]);
@@ -314,13 +316,11 @@ export default function PaperTradingPage() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-auto p-4 md:p-6">
       <PageHeader
-        eyebrow="Paper trading"
-        title="Paper Trading"
-        description="Simulated sessions, orders, fills, and positions without live exchange execution."
+        title={language === "en" ? "Paper Trading" : "Демо-торговля"}
         actions={
           <Button variant="secondary" size="sm" onClick={refreshAll} disabled={isLoading}>
             <RefreshCw className="mr-2 h-4 w-4" />
-            Refresh
+            {language === "en" ? "Refresh" : "Обновить"}
           </Button>
         }
       />
