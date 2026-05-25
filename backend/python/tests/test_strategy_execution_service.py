@@ -72,6 +72,9 @@ class Strategy:
 
     assert response.success is True
     assert response.metrics == {"total_return": 9}
+    assert response.diagnostics is not None
+    assert response.diagnostics.trades.trade_count == 0
+    assert response.diagnostics.diagnostics_status == "unavailable"
     assert response.error is None
     assert response.run_id == "101"
     assert response.job_id == "501"
