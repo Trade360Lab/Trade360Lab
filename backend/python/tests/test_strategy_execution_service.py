@@ -63,7 +63,24 @@ def test_execute_returns_metrics_for_valid_strategy(tmp_path):
 class Strategy:
     def run(self, candles, params):
         assert candles[0]["open"] == 1.0
-        return {"metrics": {"total_return": params["fast"]}}
+        return {
+            "metrics": {"total_return": params["fast"]},
+            "trades": [
+                {
+                    "entry_time": "2024-01-01T00:00:00Z",
+                    "exit_time": "2024-01-01T01:00:00Z",
+                    "entry_price": 1.0,
+                    "exit_price": 2.0,
+                    "quantity": 1.0,
+                    "pnl": 1.0,
+                    "fee": 0.0,
+                }
+            ],
+            "equityCurve": [
+                {"timestamp": "2024-01-01T00:00:00Z", "equity": 100.0},
+                {"timestamp": "2024-01-01T01:00:00Z", "equity": 101.0},
+            ],
+        }
 """.strip(),
     )
     repository = FakeCandleRepository([sample_candle()])
@@ -76,6 +93,9 @@ class Strategy:
     assert response.run_id == "101"
     assert response.job_id == "501"
     assert response.correlation_id == "run-101"
+    assert response.diagnostics is not None
+    assert response.diagnostics.trades.trade_count == 1
+    assert response.diagnostics.risk.max_drawdown == 0
     assert response.started_at is not None
     assert response.finished_at is not None
     assert response.execution_duration_ms is not None
