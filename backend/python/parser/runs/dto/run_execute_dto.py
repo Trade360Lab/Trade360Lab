@@ -23,6 +23,75 @@ class EquityPointPayload(BaseModel):
     equity: float
 
 
+class RunDiagnosticsRiskPayload(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    max_drawdown: float | None = None
+    max_drawdown_pct: float | None = None
+    drawdown_start: str | None = None
+    drawdown_end: str | None = None
+    recovery_bars: int | None = None
+
+
+class RunDiagnosticsTradesPayload(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    trade_count: int = 0
+    winning_trades: int = 0
+    losing_trades: int = 0
+    win_rate: float | None = None
+    profit_factor: float | None = None
+    average_win: float | None = None
+    average_loss: float | None = None
+    best_trade: float | None = None
+    worst_trade: float | None = None
+    longest_win_streak: int = 0
+    longest_loss_streak: int = 0
+    average_trade_pnl: float | None = None
+    median_trade_pnl: float | None = None
+    flat_trades: int = 0
+
+
+class RunDiagnosticsStabilitySegmentPayload(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    segment_index: int = Field(alias="segmentIndex", serialization_alias="segmentIndex")
+    from_time: str | None = Field(default=None, alias="from", serialization_alias="from")
+    to_time: str | None = Field(default=None, alias="to", serialization_alias="to")
+    pnl: float | None = None
+    trade_count: int = 0
+    max_drawdown: float | None = None
+    status: str
+
+
+class RunDiagnosticsStabilityPayload(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    segments: list[RunDiagnosticsStabilitySegmentPayload] = Field(default_factory=list)
+    status: str
+
+
+class RunDiagnosticsWarningPayload(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    code: str
+    message: str
+    severity: str
+
+
+class RunDiagnosticsPayload(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    diagnostics_status: str
+    diagnostics_summary: str
+    total_pnl: float | None = None
+    total_return_pct: float | None = None
+    risk: RunDiagnosticsRiskPayload
+    trades: RunDiagnosticsTradesPayload
+    stability: RunDiagnosticsStabilityPayload
+    warnings: list[RunDiagnosticsWarningPayload] = Field(default_factory=list)
+
+
 class RunExecuteRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -111,6 +180,7 @@ class RunExecuteResponse(BaseModel):
         serialization_alias="equityCurve",
     )
     artifacts: dict[str, Any] | None = Field(default=None)
+    diagnostics: RunDiagnosticsPayload | None = Field(default=None)
     engine_version: str | None = Field(
         default=None,
         alias="engineVersion",
