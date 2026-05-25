@@ -12,11 +12,12 @@ from parser.candles.models.candle import Candle
 from parser.candles.repositories.candle_repository import CandleRepository
 from parser.common.util.logging import bind_log_context
 from parser.runs.dto.run_execute_dto import RunExecuteRequest, RunExecuteResponse
+from parser.runs.services.backtest_diagnostics import calculate_backtest_diagnostics
 
 logger = logging.getLogger(__name__)
 
 
-ENGINE_VERSION = "python-execution-engine/0.9.2-alpha.1"
+ENGINE_VERSION = "python-execution-engine/0.9.5-alpha.1"
 
 
 class StrategyExecutionService:
@@ -245,6 +246,12 @@ class StrategyExecutionService:
                         "equityPointCount": len(equity_curve),
                     },
                 )
+                diagnostics = calculate_backtest_diagnostics(
+                    metrics=metrics,
+                    summary=summary,
+                    trades=trades,
+                    equity_curve=equity_curve,
+                )
 
                 finished_at = datetime.now(tz=UTC)
                 execution_duration_ms = self._duration_ms(started_monotonic)
@@ -264,6 +271,7 @@ class StrategyExecutionService:
                     trades=trades,
                     equity_curve=equity_curve,
                     artifacts=artifacts,
+                    diagnostics=diagnostics,
                     engine_version=ENGINE_VERSION,
                     run_id=request.run_id,
                     job_id=request.job_id,
