@@ -96,7 +96,6 @@ def _max_drawdown(equity_curve: list[EquityPointPayload]) -> dict[str, Any]:
         }
 
     peak_equity = float(equity_curve[0].equity)
-    peak_index = 0
     peak_time = equity_curve[0].timestamp
     max_drawdown = 0.0
     max_drawdown_pct: float | None = 0.0 if peak_equity != 0 else None
@@ -109,7 +108,6 @@ def _max_drawdown(equity_curve: list[EquityPointPayload]) -> dict[str, Any]:
         equity = float(point.equity)
         if equity > peak_equity:
             peak_equity = equity
-            peak_index = index
             peak_time = point.timestamp
 
         drawdown = peak_equity - equity
@@ -214,22 +212,40 @@ def _build_warnings(
     if trades.trade_count == 0:
         warnings.append(_warning("NO_TRADES", "high", "Backtest produced no closed trades."))
     elif trades.trade_count < LOW_TRADE_COUNT_THRESHOLD:
-        warnings.append(_warning("LOW_TRADE_COUNT", "medium", "Trade sample is too small for stability analysis."))
+        warnings.append(
+            _warning(
+                "LOW_TRADE_COUNT",
+                "medium",
+                "Trade sample is too small for stability analysis.",
+            )
+        )
 
     if risk.max_drawdown_pct is not None and risk.max_drawdown_pct >= HIGH_DRAWDOWN_PCT_THRESHOLD:
-        warnings.append(_warning("HIGH_DRAWDOWN", "high", "Maximum drawdown is high for this backtest sample."))
+        warnings.append(
+            _warning("HIGH_DRAWDOWN", "high", "Maximum drawdown is high for this backtest sample.")
+        )
 
     if trades.average_trade_pnl is not None and trades.average_trade_pnl < 0:
         warnings.append(_warning("NEGATIVE_EXPECTANCY", "high", "Average trade PnL is negative."))
 
     if stability.status in {"weak", "mixed"} and trades.trade_count > 0:
-        warnings.append(_warning("UNSTABLE_SEGMENTS", "medium", "Stability segments are mixed or weak."))
+        warnings.append(
+            _warning("UNSTABLE_SEGMENTS", "medium", "Stability segments are mixed or weak.")
+        )
 
     if trades.trade_count > 0 and trades.winning_trades == 0:
-        warnings.append(_warning("ALL_TRADES_LOSING", "high", "All closed trades are losing trades."))
+        warnings.append(
+            _warning("ALL_TRADES_LOSING", "high", "All closed trades are losing trades.")
+        )
 
     if trades.trade_count > 0 and trades.profit_factor is None:
-        warnings.append(_warning("PROFIT_FACTOR_UNAVAILABLE", "low", "Profit factor is unavailable without losing trades."))
+        warnings.append(
+            _warning(
+                "PROFIT_FACTOR_UNAVAILABLE",
+                "low",
+                "Profit factor is unavailable without losing trades.",
+            )
+        )
 
     return warnings
 
@@ -269,9 +285,15 @@ def _diagnostics_summary(
     if status == "healthy":
         return "Strategy result is profitable with stable segment behavior in this backtest sample."
     if stability.status == "mixed" and risk.total_pnl is not None and risk.total_pnl > 0:
-        return "Strategy result is profitable but mixed because gains are uneven across stability segments."
+        return (
+            "Strategy result is profitable but mixed because gains are uneven across "
+            "stability segments."
+        )
     if trades.trade_count > 0:
-        return "Strategy diagnostics are available, but warnings should be reviewed before further validation."
+        return (
+            "Strategy diagnostics are available, but warnings should be reviewed before "
+            "further validation."
+        )
     return "Backtest diagnostics are unavailable for this run."
 
 
