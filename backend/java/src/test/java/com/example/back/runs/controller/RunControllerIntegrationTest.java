@@ -24,6 +24,12 @@ import com.example.back.executionjobs.repository.ExecutionJobRepository;
 import com.example.back.executionjobs.service.ExecutionJobWorker;
 import com.example.back.imports.client.PythonParserClient;
 import com.example.back.runs.dto.PythonRunExecuteResponse;
+import com.example.back.runs.dto.RunDiagnosticsResponse;
+import com.example.back.runs.dto.RunDiagnosticsRiskResponse;
+import com.example.back.runs.dto.RunDiagnosticsStabilityResponse;
+import com.example.back.runs.dto.RunDiagnosticsStabilitySegmentResponse;
+import com.example.back.runs.dto.RunDiagnosticsTradesResponse;
+import com.example.back.runs.dto.RunDiagnosticsWarningResponse;
 import com.example.back.runs.entity.RunEntity;
 import com.example.back.runs.repository.RunRepository;
 import com.example.back.strategies.entity.StrategyFileEntity;
@@ -230,7 +236,8 @@ class RunControllerIntegrationTest {
                 .andExpect(jsonPath("$.runId").value(run.getId()))
                 .andExpect(jsonPath("$.status").value("SUCCEEDED"))
                 .andExpect(jsonPath("$.executionDurationMs").value(5000))
-                .andExpect(jsonPath("$.metrics.profit").value(9.5));
+                .andExpect(jsonPath("$.metrics.profit").value(9.5))
+                .andExpect(jsonPath("$.diagnostics").doesNotExist());
     }
 
     @Test
@@ -354,7 +361,22 @@ class RunControllerIntegrationTest {
                 .andExpect(jsonPath("$.executionDurationMs").isNumber())
                 .andExpect(jsonPath("$.metrics.profit").value(9.5))
                 .andExpect(jsonPath("$.summary.profit").value(9.5))
-                .andExpect(jsonPath("$.artifacts.tradesCount").value(1));
+                .andExpect(jsonPath("$.artifacts.tradesCount").value(1))
+                .andExpect(jsonPath("$.artifacts.diagnostics.diagnosticsStatus").value("mixed"))
+                .andExpect(jsonPath("$.diagnostics.diagnosticsStatus").value("mixed"))
+                .andExpect(jsonPath("$.diagnostics.trades.tradeCount").value(1))
+                .andExpect(jsonPath("$.diagnostics.warnings[0].code").value("LOW_TRADE_COUNT"));
+
+        mockMvc.perform(get("/api/runs/" + runId + "/result").with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.diagnostics.diagnosticsStatus").value("mixed"))
+                .andExpect(jsonPath("$.diagnostics.risk.maxDrawdown").value(2.0))
+                .andExpect(jsonPath("$.diagnostics.stability.segments[0].status").value("strong"));
+
+        mockMvc.perform(get("/api/runs/" + runId + "/artifacts").with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.artifactType == 'STRATEGY_REPORT_JSON')]").isNotEmpty())
+                .andExpect(jsonPath("$[?(@.artifactName == 'strategy-report-" + runId + ".json')]").isNotEmpty());
 
         ExecutionJobEntity job = executionJobRepository.findAll().get(0);
         org.assertj.core.api.Assertions.assertThat(job.getStatus()).isEqualTo(ExecutionJobStatus.SUCCEEDED);
@@ -624,6 +646,7 @@ class RunControllerIntegrationTest {
         response.setTrades(result.getTrades());
         response.setEquityCurve(result.getEquityCurve());
         response.setArtifacts(Map.of("tradesCount", 1, "equityPointCount", 1));
+        response.setDiagnostics(runDiagnostics());
         response.setEngineVersion("python-execution-engine/0.3.0-alpha.1");
         response.setRunId("1");
         response.setCorrelationId("run-1");
@@ -632,6 +655,54 @@ class RunControllerIntegrationTest {
         response.setExecutionDurationMs(1000L);
         response.setError(null);
         return response;
+    }
+
+    private RunDiagnosticsResponse runDiagnostics() {
+        return new RunDiagnosticsResponse(
+                "mixed",
+                "Backtest produced too few trades to evaluate stability.",
+                new RunDiagnosticsRiskResponse(
+                        9.5,
+                        0.095,
+                        2.0,
+                        0.02,
+                        "2024-01-01T00:00:00Z",
+                        "2024-01-01T01:00:00Z",
+                        1
+                ),
+                new RunDiagnosticsTradesResponse(
+                        1,
+                        1,
+                        0,
+                        100.0,
+                        null,
+                        9.5,
+                        null,
+                        9.5,
+                        9.5,
+                        1,
+                        0,
+                        9.5,
+                        9.5
+                ),
+                new RunDiagnosticsStabilityResponse(
+                        List.of(new RunDiagnosticsStabilitySegmentResponse(
+                                1,
+                                "2024-01-01T00:00:00Z",
+                                "2024-01-01T01:00:00Z",
+                                9.5,
+                                1,
+                                0.0,
+                                "strong"
+                        )),
+                        "strong"
+                ),
+                List.of(new RunDiagnosticsWarningResponse(
+                        "LOW_TRADE_COUNT",
+                        "medium",
+                        "Trade sample is too small for stability analysis."
+                ))
+        );
     }
 
     private PythonRunExecuteResponse failedPythonRunExecuteResponse() {
