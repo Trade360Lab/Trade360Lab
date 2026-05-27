@@ -23,6 +23,7 @@ import com.example.back.executionjobs.service.ExecutionJobService;
 import com.example.back.imports.client.PythonParserClient;
 import com.example.back.runs.dto.PythonRunExecuteRequest;
 import com.example.back.runs.dto.PythonRunExecuteResponse;
+import com.example.back.runs.dto.RunDiagnosticsResponse;
 import com.example.back.runs.entity.RunEntity;
 import com.example.back.runs.entity.RunSnapshotEntity;
 import com.example.back.runs.repository.RunRepository;
@@ -53,8 +54,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RunOrchestrationService {
 
-    private static final String DEFAULT_ENGINE_VERSION = "python-execution-engine/0.9.1-alpha.1";
+    private static final String DEFAULT_ENGINE_VERSION = "python-execution-engine/0.9.5-alpha.1";
     private static final String PYTHON_EXECUTE_ENDPOINT = "/internal/runs/execute";
+    private static final String STRATEGY_REPORT_SAFETY_NOTE = "This report is for alpha research and validation only. "
+            + "It is not financial advice and does not certify production trading readiness.";
 
     private final RunRepository runRepository;
     private final RunSnapshotRepository runSnapshotRepository;
@@ -530,7 +533,7 @@ public class RunOrchestrationService {
         run.setExecutionDurationMs(resolveExecutionDurationMs(run.getStartedAt(), run.getFinishedAt()));
         run.setSummaryJson(writeJson(defaultMap(response.getSummary())));
         run.setMetricsJson(writeJson(defaultMap(response.getMetrics())));
-        run.setArtifactsJson(writeJson(defaultMap(response.getArtifacts())));
+        run.setArtifactsJson(writeJson(buildStoredArtifacts(runId, response)));
         run.setErrorMessage(null);
         run.setErrorDetailsJson(null);
         run.setEngineVersion(resolveEngineVersion(response.getEngineVersion()));
@@ -554,6 +557,7 @@ public class RunOrchestrationService {
                 defaultMap(response.getMetrics()),
                 defaultList(response.getTrades()),
                 defaultList(response.getEquityCurve()),
+                response.getDiagnostics(),
                 buildRunReport(run, response)
         );
 
@@ -577,10 +581,24 @@ public class RunOrchestrationService {
         report.put("to", run.getDateTo());
         report.put("engineVersion", resolveEngineVersion(response.getEngineVersion()));
         report.put("executionDurationMs", run.getExecutionDurationMs());
+        report.put("generatedAt", Instant.now());
         report.put("summary", defaultMap(response.getSummary()));
         report.put("metrics", defaultMap(response.getMetrics()));
+        report.put("diagnostics", response.getDiagnostics());
+        report.put("warnings", response.getDiagnostics() == null ? List.of() : response.getDiagnostics().warnings());
         report.put("artifacts", defaultMap(response.getArtifacts()));
+        report.put("safetyNote", STRATEGY_REPORT_SAFETY_NOTE);
         return report;
+    }
+
+    private Map<String, Object> buildStoredArtifacts(Long runId, PythonRunExecuteResponse response) {
+        Map<String, Object> artifacts = new LinkedHashMap<>(defaultMap(response.getArtifacts()));
+        RunDiagnosticsResponse diagnostics = response.getDiagnostics();
+        if (diagnostics != null) {
+            artifacts.put("diagnostics", diagnostics);
+            artifacts.put("strategyReportArtifact", "strategy-report-%d.json".formatted(runId));
+        }
+        return artifacts;
     }
 
     private void markFailed(Long runId, String message, String errorDetailsJson) {

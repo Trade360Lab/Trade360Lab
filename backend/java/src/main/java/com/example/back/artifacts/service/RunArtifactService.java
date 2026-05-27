@@ -11,6 +11,7 @@ import com.example.back.runs.repository.RunRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -60,16 +61,25 @@ public class RunArtifactService {
             Object metrics,
             Object trades,
             Object equityCurve,
+            Object diagnostics,
             Object report
     ) {
         runArtifactRepository.deleteByRunId(runId);
-        return runArtifactRepository.saveAll(List.of(
-                buildArtifact(runId, "SUMMARY_JSON", "result_summary.json", summary),
-                buildArtifact(runId, "METRICS_JSON", "metrics.json", metrics),
-                buildArtifact(runId, "TRADES", "trades.json", trades),
-                buildArtifact(runId, "EQUITY_CURVE", "equity_curve.json", equityCurve),
-                buildArtifact(runId, "REPORT_JSON", "run_report.json", report)
+        List<RunArtifactEntity> artifacts = new ArrayList<>();
+        artifacts.add(buildArtifact(runId, "SUMMARY_JSON", "result_summary.json", summary));
+        artifacts.add(buildArtifact(runId, "METRICS_JSON", "metrics.json", metrics));
+        artifacts.add(buildArtifact(runId, "TRADES", "trades.json", trades));
+        artifacts.add(buildArtifact(runId, "EQUITY_CURVE", "equity_curve.json", equityCurve));
+        if (diagnostics != null) {
+            artifacts.add(buildArtifact(runId, "DIAGNOSTICS_JSON", "diagnostics.json", diagnostics));
+        }
+        artifacts.add(buildArtifact(
+                runId,
+                "STRATEGY_REPORT_JSON",
+                "strategy-report-%d.json".formatted(runId),
+                report
         ));
+        return runArtifactRepository.saveAll(artifacts);
     }
 
     @Transactional
