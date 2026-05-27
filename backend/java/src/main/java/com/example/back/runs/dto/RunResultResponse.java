@@ -18,6 +18,7 @@ public record RunResultResponse(
         Map<String, Object> summary,
         Map<String, Object> metrics,
         Map<String, Object> artifacts,
+        RunDiagnosticsResponse diagnostics,
         List<BacktestTrade> trades,
         List<EquityPoint> equityCurve,
         String errorMessage,

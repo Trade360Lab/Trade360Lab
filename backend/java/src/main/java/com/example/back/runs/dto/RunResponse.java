@@ -31,6 +31,7 @@ public record RunResponse(
         Map<String, Object> summary,
         Map<String, Object> metrics,
         Map<String, Object> artifacts,
+        RunDiagnosticsResponse diagnostics,
         String errorMessage,
         Map<String, Object> errorDetails
 ) {

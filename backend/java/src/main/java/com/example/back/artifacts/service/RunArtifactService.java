@@ -68,7 +68,8 @@ public class RunArtifactService {
                 buildArtifact(runId, "METRICS_JSON", "metrics.json", metrics),
                 buildArtifact(runId, "TRADES", "trades.json", trades),
                 buildArtifact(runId, "EQUITY_CURVE", "equity_curve.json", equityCurve),
-                buildArtifact(runId, "REPORT_JSON", "run_report.json", report)
+                buildArtifact(runId, "REPORT_JSON", "run_report.json", report),
+                buildArtifact(runId, "STRATEGY_REPORT_JSON", "strategy-report-%d.json".formatted(runId), report)
         ));
     }
 

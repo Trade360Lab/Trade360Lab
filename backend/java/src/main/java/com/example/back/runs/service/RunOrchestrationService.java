@@ -53,7 +53,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RunOrchestrationService {
 
-    private static final String DEFAULT_ENGINE_VERSION = "python-execution-engine/0.9.1-alpha.1";
+    private static final String DEFAULT_ENGINE_VERSION = "python-execution-engine/0.9.5-alpha.1";
+    private static final String STRATEGY_REPORT_SAFETY_NOTE = "This report is for alpha research and validation only. "
+            + "It is not financial advice and does not certify production trading readiness.";
     private static final String PYTHON_EXECUTE_ENDPOINT = "/internal/runs/execute";
 
     private final RunRepository runRepository;
@@ -526,11 +528,12 @@ public class RunOrchestrationService {
         RunEntity run = findRun(runId);
         transitionStatus(run, BacktestStatus.SUCCEEDED);
         validateResponseCorrelation(run, response);
+        Map<String, Object> storedArtifacts = buildStoredArtifacts(response);
         run.setFinishedAt(Instant.now());
         run.setExecutionDurationMs(resolveExecutionDurationMs(run.getStartedAt(), run.getFinishedAt()));
         run.setSummaryJson(writeJson(defaultMap(response.getSummary())));
         run.setMetricsJson(writeJson(defaultMap(response.getMetrics())));
-        run.setArtifactsJson(writeJson(defaultMap(response.getArtifacts())));
+        run.setArtifactsJson(writeJson(storedArtifacts));
         run.setErrorMessage(null);
         run.setErrorDetailsJson(null);
         run.setEngineVersion(resolveEngineVersion(response.getEngineVersion()));
@@ -579,8 +582,27 @@ public class RunOrchestrationService {
         report.put("executionDurationMs", run.getExecutionDurationMs());
         report.put("summary", defaultMap(response.getSummary()));
         report.put("metrics", defaultMap(response.getMetrics()));
-        report.put("artifacts", defaultMap(response.getArtifacts()));
+        report.put("diagnostics", response.getDiagnostics());
+        report.put("warnings", response.getDiagnostics() == null ? List.of() : response.getDiagnostics().warnings());
+        report.put("artifacts", buildStoredArtifacts(response));
+        report.put("generatedAt", Instant.now());
+        report.put("safetyNote", STRATEGY_REPORT_SAFETY_NOTE);
         return report;
+    }
+
+    private Map<String, Object> buildStoredArtifacts(PythonRunExecuteResponse response) {
+        Map<String, Object> artifacts = new LinkedHashMap<>(defaultMap(response.getArtifacts()));
+        if (response.getDiagnostics() != null) {
+            artifacts.put("diagnostics", objectMapper.convertValue(response.getDiagnostics(), Map.class));
+            artifacts.put("strategyReport", Map.of(
+                    "artifactName", "strategy-report-%s.json".formatted(
+                            firstNonBlank(response.getRunId(), "run")
+                    ),
+                    "contentType", "application/json",
+                    "safetyNote", STRATEGY_REPORT_SAFETY_NOTE
+            ));
+        }
+        return artifacts;
     }
 
     private void markFailed(Long runId, String message, String errorDetailsJson) {
