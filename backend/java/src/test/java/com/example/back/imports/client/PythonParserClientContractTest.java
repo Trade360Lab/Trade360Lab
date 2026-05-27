@@ -43,7 +43,56 @@ class PythonParserClientContractTest {
                           "trades": [],
                           "equityCurve": [],
                           "artifacts": null,
-                          "engineVersion": "python-execution-engine/0.9.1-alpha.1",
+                          "diagnostics": {
+                            "diagnosticsStatus": "mixed",
+                            "diagnosticsSummary": "Backtest produced too few trades to evaluate stability.",
+                            "totalPnL": 9.5,
+                            "totalReturnPct": 0.1,
+                            "risk": {
+                              "maxDrawdown": 2.5,
+                              "maxDrawdownPct": 1.2,
+                              "drawdownStart": "2024-01-01T00:00:00Z",
+                              "drawdownEnd": "2024-01-01T01:00:00Z",
+                              "recoveryBars": 3
+                            },
+                            "trades": {
+                              "tradeCount": 4,
+                              "winningTrades": 2,
+                              "losingTrades": 2,
+                              "winRate": 50.0,
+                              "profitFactor": 1.4,
+                              "averageWin": 5.0,
+                              "averageLoss": -3.5,
+                              "bestTrade": 8.0,
+                              "worstTrade": -5.0,
+                              "longestWinStreak": 2,
+                              "longestLossStreak": 1,
+                              "averageTradePnl": 0.75,
+                              "medianTradePnl": 1.0
+                            },
+                            "stability": {
+                              "status": "mixed",
+                              "segments": [
+                                {
+                                  "segmentIndex": 1,
+                                  "from": "2024-01-01T00:00:00Z",
+                                  "to": "2024-01-01T01:00:00Z",
+                                  "pnl": 9.5,
+                                  "tradeCount": 4,
+                                  "maxDrawdown": 2.5,
+                                  "status": "mixed"
+                                }
+                              ]
+                            },
+                            "warnings": [
+                              {
+                                "code": "LOW_TRADE_COUNT",
+                                "message": "Backtest produced too few trades to evaluate stability.",
+                                "severity": "warning"
+                              }
+                            ]
+                          },
+                          "engineVersion": "python-execution-engine/0.9.5-alpha.1",
                           "runId": "run-1",
                           "jobId": "job-1",
                           "correlationId": "corr-1",
@@ -56,6 +105,9 @@ class PythonParserClientContractTest {
         assertThat(response.getSuccess()).isTrue();
         assertThat(response.getJobId()).isEqualTo("job-1");
         assertThat(response.getCorrelationId()).isEqualTo("corr-1");
+        assertThat(response.getDiagnostics()).isNotNull();
+        assertThat(response.getDiagnostics().trades().tradeCount()).isEqualTo(4);
+        assertThat(response.getDiagnostics().warnings()).extracting("code").contains("LOW_TRADE_COUNT");
         server.verify();
     }
 

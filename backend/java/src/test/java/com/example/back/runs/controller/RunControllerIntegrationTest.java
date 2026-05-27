@@ -23,6 +23,12 @@ import com.example.back.executionjobs.entity.ExecutionJobStatus;
 import com.example.back.executionjobs.repository.ExecutionJobRepository;
 import com.example.back.executionjobs.service.ExecutionJobWorker;
 import com.example.back.imports.client.PythonParserClient;
+import com.example.back.runs.dto.RunDiagnosticsResponse;
+import com.example.back.runs.dto.RunDiagnosticsRiskResponse;
+import com.example.back.runs.dto.RunDiagnosticsStabilityResponse;
+import com.example.back.runs.dto.RunDiagnosticsStabilitySegmentResponse;
+import com.example.back.runs.dto.RunDiagnosticsTradesResponse;
+import com.example.back.runs.dto.RunDiagnosticsWarningResponse;
 import com.example.back.runs.dto.PythonRunExecuteResponse;
 import com.example.back.runs.entity.RunEntity;
 import com.example.back.runs.repository.RunRepository;
@@ -234,6 +240,89 @@ class RunControllerIntegrationTest {
     }
 
     @Test
+    void getRunResultReturnsOptionalDiagnosticsAndSupportsOldResults() throws Exception {
+        RunEntity oldRun = saveRun(
+                BacktestStatus.SUCCEEDED,
+                Instant.parse("2024-01-01T00:00:00Z"),
+                "{\"fastPeriod\":10}",
+                "{\"profit\":9.5}",
+                null
+        );
+        mockMvc.perform(get("/api/runs/" + oldRun.getId() + "/result").with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.diagnostics").doesNotExist());
+
+        RunEntity run = saveRun(
+                BacktestStatus.SUCCEEDED,
+                Instant.parse("2024-01-02T00:00:00Z"),
+                "{\"fastPeriod\":10}",
+                "{\"profit\":9.5}",
+                null
+        );
+        run.setArtifactsJson("""
+                {
+                  "tradesCount": 4,
+                  "diagnostics": {
+                    "diagnosticsStatus": "mixed",
+                    "diagnosticsSummary": "Backtest produced too few trades to evaluate stability.",
+                    "risk": {
+                      "maxDrawdown": 2.5,
+                      "maxDrawdownPct": 1.2,
+                      "drawdownStart": "2024-01-01T00:00:00Z",
+                      "drawdownEnd": "2024-01-01T01:00:00Z",
+                      "recoveryBars": 3
+                    },
+                    "trades": {
+                      "tradeCount": 4,
+                      "winningTrades": 2,
+                      "losingTrades": 2,
+                      "winRate": 50.0,
+                      "profitFactor": 1.4,
+                      "averageWin": 5.0,
+                      "averageLoss": -3.5,
+                      "bestTrade": 8.0,
+                      "worstTrade": -5.0,
+                      "longestWinStreak": 2,
+                      "longestLossStreak": 1,
+                      "averageTradePnl": 0.75,
+                      "medianTradePnl": 1.0
+                    },
+                    "stability": {
+                      "status": "mixed",
+                      "segments": [
+                        {
+                          "segmentIndex": 1,
+                          "from": "2024-01-01T00:00:00Z",
+                          "to": "2024-01-01T01:00:00Z",
+                          "pnl": 9.5,
+                          "tradeCount": 4,
+                          "maxDrawdown": 2.5,
+                          "status": "mixed"
+                        }
+                      ]
+                    },
+                    "warnings": [
+                      {
+                        "code": "LOW_TRADE_COUNT",
+                        "message": "Backtest produced too few trades to evaluate stability.",
+                        "severity": "warning"
+                      }
+                    ]
+                  }
+                }
+                """);
+        runRepository.saveAndFlush(run);
+
+        mockMvc.perform(get("/api/runs/" + run.getId() + "/result").with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.diagnostics.diagnosticsStatus").value("mixed"))
+                .andExpect(jsonPath("$.diagnostics.trades.tradeCount").value(4))
+                .andExpect(jsonPath("$.diagnostics.risk.maxDrawdown").value(2.5))
+                .andExpect(jsonPath("$.diagnostics.stability.segments[0].status").value("mixed"))
+                .andExpect(jsonPath("$.diagnostics.warnings[0].code").value("LOW_TRADE_COUNT"));
+    }
+
+    @Test
     void getRunArtifactsReturnsOwnedArtifactMetadataAndPayload() throws Exception {
         RunEntity run = saveRun(
                 BacktestStatus.SUCCEEDED,
@@ -354,7 +443,19 @@ class RunControllerIntegrationTest {
                 .andExpect(jsonPath("$.executionDurationMs").isNumber())
                 .andExpect(jsonPath("$.metrics.profit").value(9.5))
                 .andExpect(jsonPath("$.summary.profit").value(9.5))
-                .andExpect(jsonPath("$.artifacts.tradesCount").value(1));
+                .andExpect(jsonPath("$.artifacts.tradesCount").value(1))
+                .andExpect(jsonPath("$.diagnostics.diagnosticsStatus").value("mixed"))
+                .andExpect(jsonPath("$.diagnostics.trades.tradeCount").value(1));
+
+        org.assertj.core.api.Assertions.assertThat(runArtifactRepository.findAllByRunIdOrderByCreatedAtAsc(runId))
+                .anySatisfy(artifact -> {
+                    org.assertj.core.api.Assertions.assertThat(artifact.getArtifactType())
+                            .isEqualTo("STRATEGY_REPORT_JSON");
+                    org.assertj.core.api.Assertions.assertThat(artifact.getArtifactName())
+                            .isEqualTo("strategy-report-%d.json".formatted(runId));
+                    org.assertj.core.api.Assertions.assertThat(artifact.getPayloadJson())
+                            .contains("This report is for alpha research and validation only");
+                });
 
         ExecutionJobEntity job = executionJobRepository.findAll().get(0);
         org.assertj.core.api.Assertions.assertThat(job.getStatus()).isEqualTo(ExecutionJobStatus.SUCCEEDED);
@@ -624,6 +725,7 @@ class RunControllerIntegrationTest {
         response.setTrades(result.getTrades());
         response.setEquityCurve(result.getEquityCurve());
         response.setArtifacts(Map.of("tradesCount", 1, "equityPointCount", 1));
+        response.setDiagnostics(diagnosticsResponse());
         response.setEngineVersion("python-execution-engine/0.3.0-alpha.1");
         response.setRunId("1");
         response.setCorrelationId("run-1");
@@ -632,6 +734,55 @@ class RunControllerIntegrationTest {
         response.setExecutionDurationMs(1000L);
         response.setError(null);
         return response;
+    }
+
+    private RunDiagnosticsResponse diagnosticsResponse() {
+        return new RunDiagnosticsResponse(
+                "mixed",
+                "Backtest produced too few trades to evaluate stability.",
+                9.5,
+                0.1,
+                new RunDiagnosticsRiskResponse(
+                        2.5,
+                        1.2,
+                        "2024-01-01T00:00:00Z",
+                        "2024-01-01T01:00:00Z",
+                        3
+                ),
+                new RunDiagnosticsTradesResponse(
+                        1,
+                        1,
+                        0,
+                        100.0,
+                        null,
+                        9.5,
+                        null,
+                        9.5,
+                        9.5,
+                        1,
+                        0,
+                        9.5,
+                        9.5,
+                        0
+                ),
+                new RunDiagnosticsStabilityResponse(
+                        List.of(new RunDiagnosticsStabilitySegmentResponse(
+                                1,
+                                "2024-01-01T00:00:00Z",
+                                "2024-01-01T01:00:00Z",
+                                9.5,
+                                1,
+                                2.5,
+                                "mixed"
+                        )),
+                        "mixed"
+                ),
+                List.of(new RunDiagnosticsWarningResponse(
+                        "LOW_TRADE_COUNT",
+                        "Backtest produced too few trades to evaluate stability.",
+                        "warning"
+                ))
+        );
     }
 
     private PythonRunExecuteResponse failedPythonRunExecuteResponse() {
