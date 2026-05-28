@@ -17,6 +17,7 @@ import {
 } from "@/features/runs/charts/run-charts";
 import { MetricCard } from "@/features/runs/components/metric-card";
 import { RunHeader } from "@/features/runs/components/run-header";
+import { StrategyReport } from "@/features/runs/components/strategy-report";
 import { TradesTable } from "@/features/runs/components/trades-table";
 import { useRuns } from "@/features/runs/store/run-store";
 import { Button } from "@/components/ui/button";
@@ -391,6 +392,8 @@ export default function RunDetailsPage() {
         </SurfaceCard>
         </div>
       ) : null}
+
+      {hasRunMetrics ? <StrategyReport run={run} /> : null}
 
       {isAnalyzerFullscreen ? (
         <div className="fixed inset-0 z-[100] bg-background/88 p-4 backdrop-blur-sm md:p-6">

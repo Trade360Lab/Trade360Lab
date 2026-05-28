@@ -1,4 +1,4 @@
-import type { Run, RunArtifact, RunMetrics, RunParams, RunStatus, Strategy } from "@/lib/types";
+import type { Run, RunArtifact, RunDiagnostics, RunMetrics, RunParams, RunStatus, Strategy } from "@/lib/types";
 import { apiFetch } from "@/lib/api/client";
 
 type BackendRunResponse = {
@@ -16,6 +16,7 @@ type BackendRunResponse = {
   parameters?: Record<string, unknown> | null;
   params?: Record<string, unknown> | null;
   metrics?: Record<string, unknown> | null;
+  diagnostics?: RunDiagnostics | null;
   errorMessage?: string | null;
   createdAt: string;
   finishedAt?: string | null;
@@ -100,6 +101,10 @@ function getMetric(metrics: Record<string, unknown> | null | undefined, keys: st
   }
 
   return null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
 function toFrontendStatus(status: string): RunStatus {
@@ -209,11 +214,11 @@ function toDisplayStrategyName(
 }
 
 function normalizeBackendRun(payload: unknown): BackendRunResponse | null {
-  if (!payload || typeof payload !== "object") {
+  if (!isRecord(payload)) {
     return null;
   }
 
-  const candidate = payload as Record<string, unknown>;
+  const candidate = payload;
   if (
     typeof candidate.id !== "number" ||
     typeof candidate.strategyId !== "number" ||
@@ -242,19 +247,84 @@ function normalizeBackendRun(payload: unknown): BackendRunResponse | null {
     from: candidate.from,
     to: candidate.to,
     params:
-      candidate.parameters && typeof candidate.parameters === "object"
+      isRecord(candidate.parameters)
         ? (candidate.parameters as Record<string, unknown>)
-        : candidate.params && typeof candidate.params === "object"
+        : isRecord(candidate.params)
           ? (candidate.params as Record<string, unknown>)
           : null,
     metrics:
-      candidate.metrics && typeof candidate.metrics === "object"
+      isRecord(candidate.metrics)
         ? (candidate.metrics as Record<string, unknown>)
         : null,
+    diagnostics: normalizeDiagnostics(candidate.diagnostics),
     errorMessage: typeof candidate.errorMessage === "string" ? candidate.errorMessage : null,
     createdAt: candidate.createdAt,
     startedAt: typeof candidate.startedAt === "string" ? candidate.startedAt : null,
     finishedAt: typeof candidate.finishedAt === "string" ? candidate.finishedAt : null,
+  };
+}
+
+function normalizeDiagnostics(value: unknown): RunDiagnostics | null {
+  if (!isRecord(value) || !isRecord(value.risk) || !isRecord(value.trades) || !isRecord(value.stability)) {
+    return null;
+  }
+
+  const warnings = Array.isArray(value.warnings)
+    ? value.warnings
+        .filter(isRecord)
+        .map((warning) => ({
+          code: typeof warning.code === "string" ? warning.code : "UNKNOWN",
+          severity: typeof warning.severity === "string" ? warning.severity : "low",
+          message: typeof warning.message === "string" ? warning.message : "",
+        }))
+    : [];
+
+  const segments = Array.isArray(value.stability.segments)
+    ? value.stability.segments
+        .filter(isRecord)
+        .map((segment) => ({
+          segmentIndex: Math.round(toNumber(segment.segmentIndex) ?? 0),
+          from: typeof segment.from === "string" ? segment.from : null,
+          to: typeof segment.to === "string" ? segment.to : null,
+          pnl: toNumber(segment.pnl) ?? 0,
+          tradeCount: Math.round(toNumber(segment.tradeCount) ?? 0),
+          maxDrawdown: toNumber(segment.maxDrawdown),
+          status: typeof segment.status === "string" ? segment.status : "mixed",
+        }))
+    : [];
+
+  return {
+    diagnosticsStatus: typeof value.diagnosticsStatus === "string" ? value.diagnosticsStatus : "unavailable",
+    diagnosticsSummary: typeof value.diagnosticsSummary === "string" ? value.diagnosticsSummary : "",
+    risk: {
+      totalPnl: toNumber(value.risk.totalPnl),
+      totalReturnPct: toNumber(value.risk.totalReturnPct),
+      maxDrawdown: toNumber(value.risk.maxDrawdown),
+      maxDrawdownPct: toNumber(value.risk.maxDrawdownPct),
+      drawdownStart: typeof value.risk.drawdownStart === "string" ? value.risk.drawdownStart : null,
+      drawdownEnd: typeof value.risk.drawdownEnd === "string" ? value.risk.drawdownEnd : null,
+      recoveryBars: toNumber(value.risk.recoveryBars),
+    },
+    trades: {
+      tradeCount: Math.round(toNumber(value.trades.tradeCount) ?? 0),
+      winningTrades: Math.round(toNumber(value.trades.winningTrades) ?? 0),
+      losingTrades: Math.round(toNumber(value.trades.losingTrades) ?? 0),
+      winRate: toNumber(value.trades.winRate),
+      profitFactor: toNumber(value.trades.profitFactor),
+      averageWin: toNumber(value.trades.averageWin),
+      averageLoss: toNumber(value.trades.averageLoss),
+      bestTrade: toNumber(value.trades.bestTrade),
+      worstTrade: toNumber(value.trades.worstTrade),
+      longestWinStreak: Math.round(toNumber(value.trades.longestWinStreak) ?? 0),
+      longestLossStreak: Math.round(toNumber(value.trades.longestLossStreak) ?? 0),
+      averageTradePnl: toNumber(value.trades.averageTradePnl),
+      medianTradePnl: toNumber(value.trades.medianTradePnl),
+    },
+    stability: {
+      segments,
+      status: typeof value.stability.status === "string" ? value.stability.status : "no_trades",
+    },
+    warnings,
   };
 }
 
@@ -288,6 +358,7 @@ export function toFrontendRun(
     params: toRunParams(backendRun.interval, backendRun.from, backendRun.to),
     strategyParams: backendRun.params ?? {},
     metrics: toFrontendMetrics(backendRun.metrics),
+    diagnostics: backendRun.diagnostics,
     status: toFrontendStatus(backendRun.status),
     artifacts: [],
     createdAt: backendRun.createdAt,

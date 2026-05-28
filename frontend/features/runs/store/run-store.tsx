@@ -63,6 +63,7 @@ function mergeBackendRunWithLocalState(backendRun: Run, localRun?: Run) {
     strategy: localRun.strategy || backendRun.strategy,
     tags: localRun.tags.length > 0 ? localRun.tags : backendRun.tags,
     artifacts: localRun.artifacts.length > 0 ? localRun.artifacts : backendRun.artifacts,
+    diagnostics: backendRun.diagnostics ?? localRun.diagnostics,
     strategyParams: localRun.strategyParams ?? backendRun.strategyParams,
     commit: localRun.commit || backendRun.commit,
     config: localRun.config || backendRun.config,

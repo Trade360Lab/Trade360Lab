@@ -29,6 +29,62 @@ export type RunArtifact = {
   downloadUrl?: string;
 };
 
+export type RunDiagnosticsWarning = {
+  code: string;
+  severity: string;
+  message: string;
+};
+
+export type RunDiagnosticsRisk = {
+  totalPnl?: number | null;
+  totalReturnPct?: number | null;
+  maxDrawdown?: number | null;
+  maxDrawdownPct?: number | null;
+  drawdownStart?: string | null;
+  drawdownEnd?: string | null;
+  recoveryBars?: number | null;
+};
+
+export type RunDiagnosticsTrades = {
+  tradeCount: number;
+  winningTrades: number;
+  losingTrades: number;
+  winRate?: number | null;
+  profitFactor?: number | null;
+  averageWin?: number | null;
+  averageLoss?: number | null;
+  bestTrade?: number | null;
+  worstTrade?: number | null;
+  longestWinStreak: number;
+  longestLossStreak: number;
+  averageTradePnl?: number | null;
+  medianTradePnl?: number | null;
+};
+
+export type RunDiagnosticsStabilitySegment = {
+  segmentIndex: number;
+  from?: string | null;
+  to?: string | null;
+  pnl: number;
+  tradeCount: number;
+  maxDrawdown?: number | null;
+  status: string;
+};
+
+export type RunDiagnosticsStability = {
+  segments: RunDiagnosticsStabilitySegment[];
+  status: string;
+};
+
+export type RunDiagnostics = {
+  diagnosticsStatus: string;
+  diagnosticsSummary: string;
+  risk: RunDiagnosticsRisk;
+  trades: RunDiagnosticsTrades;
+  stability: RunDiagnosticsStability;
+  warnings: RunDiagnosticsWarning[];
+};
+
 export type Run = {
   id: string;
   backendRunId?: number;
@@ -42,6 +98,7 @@ export type Run = {
   params: RunParams;
   strategyParams?: Record<string, unknown>;
   metrics: RunMetrics;
+  diagnostics?: RunDiagnostics | null;
   status: RunStatus;
   artifacts: RunArtifact[];
   createdAt: string;
