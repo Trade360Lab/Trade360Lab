@@ -23,11 +23,17 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { previewRows } from "@/lib/demo-data/datasets";
 import { logLines } from "@/lib/demo-data/logs";
 import { trades } from "@/lib/demo-data/trades";
 import { cancelRun as cancelBackendRun, fetchRunArtifacts, retryRun as retryBackendRun } from "@/lib/api/runs";
 import { fetchStrategyById } from "@/lib/api/strategies";
+import {
+  diagnosticsStatusLabel,
+  diagnosticsWarningLabel,
+  formatDiagnosticsValue,
+} from "@/lib/run-diagnostics";
 
 export default function RunDetailsPage() {
   const params = useParams();
@@ -101,6 +107,9 @@ export default function RunDetailsPage() {
   }
 
   const hasRunMetrics = run.status === "done";
+  const diagnostics = run.diagnostics ?? null;
+  const diagnosticsWarnings = diagnostics?.warnings ?? [];
+  const stabilitySegments = diagnostics?.stability.segments ?? [];
   const isLaunchAction = run.status === "queued";
   const runActionLabel = isLaunchAction ? "Запуск" : "Перезапуск";
   const canCancelRun = run.backendRunId !== undefined && (run.status === "queued" || run.status === "running");
@@ -305,6 +314,189 @@ export default function RunDetailsPage() {
           </div>
         </SurfaceCard>
       )}
+
+      {hasRunMetrics ? (
+        <SurfaceCard
+          title="Strategy Report"
+          subtitle={diagnostics?.diagnosticsSummary ?? "Diagnostics are not available for this run."}
+        >
+          {diagnostics ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+                <MetricCard
+                  label="Total PnL"
+                  value={formatDiagnosticsValue(diagnostics.totalPnL, { digits: 2 })}
+                  tone={(diagnostics.totalPnL ?? 0) >= 0 ? "profit" : "loss"}
+                />
+                <MetricCard
+                  label="Max Drawdown"
+                  value={formatDiagnosticsValue(diagnostics.risk.maxDrawdownPct, { suffix: "%", digits: 2 })}
+                  tone="loss"
+                />
+                <MetricCard
+                  label="Win Rate"
+                  value={formatDiagnosticsValue(diagnostics.trades.winRate, { suffix: "%", digits: 1 })}
+                />
+                <MetricCard
+                  label="Profit Factor"
+                  value={formatDiagnosticsValue(diagnostics.trades.profitFactor, { digits: 2 })}
+                />
+                <MetricCard label="Trade Count" value={`${diagnostics.trades.tradeCount}`} />
+                <MetricCard
+                  label="Stability"
+                  value={diagnosticsStatusLabel(diagnostics.stability.status)}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Badge variant={diagnostics.diagnosticsStatus === "fragile" ? "destructive" : "secondary"}>
+                  {diagnosticsStatusLabel(diagnostics.diagnosticsStatus)}
+                </Badge>
+                {diagnosticsWarnings.length === 0 ? (
+                  <Badge variant="outline">No diagnostics warnings</Badge>
+                ) : (
+                  diagnosticsWarnings.map((warning) => (
+                    <Badge
+                      key={`${warning.code}-${warning.message}`}
+                      variant={warning.severity === "warning" ? "destructive" : "secondary"}
+                    >
+                      {diagnosticsWarningLabel(warning.code)}
+                    </Badge>
+                  ))
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <div className="rounded-md border border-border bg-panel-subtle p-3">
+                  <div className="mb-3 text-xs font-semibold uppercase text-muted-foreground">
+                    Drawdown
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <div className="text-muted-foreground">Amount</div>
+                      <div className="font-medium text-loss">
+                        {formatDiagnosticsValue(diagnostics.risk.maxDrawdown, { digits: 2 })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Recovery Bars</div>
+                      <div className="font-medium text-foreground">
+                        {diagnostics.risk.recoveryBars ?? "N/A"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Start</div>
+                      <div className="font-mono text-[11px] text-foreground">
+                        {diagnostics.risk.drawdownStart ?? "N/A"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">End</div>
+                      <div className="font-mono text-[11px] text-foreground">
+                        {diagnostics.risk.drawdownEnd ?? "N/A"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-md border border-border bg-panel-subtle p-3">
+                  <div className="mb-3 text-xs font-semibold uppercase text-muted-foreground">
+                    Trade Distribution
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <div className="text-muted-foreground">Best Trade</div>
+                      <div className="font-medium text-profit">
+                        {formatDiagnosticsValue(diagnostics.trades.bestTrade, { digits: 2 })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Worst Trade</div>
+                      <div className="font-medium text-loss">
+                        {formatDiagnosticsValue(diagnostics.trades.worstTrade, { digits: 2 })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Average Win</div>
+                      <div className="font-medium text-profit">
+                        {formatDiagnosticsValue(diagnostics.trades.averageWin, { digits: 2 })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Average Loss</div>
+                      <div className="font-medium text-loss">
+                        {formatDiagnosticsValue(diagnostics.trades.averageLoss, { digits: 2 })}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Win Streak</div>
+                      <div className="font-medium text-foreground">
+                        {diagnostics.trades.longestWinStreak}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Loss Streak</div>
+                      <div className="font-medium text-foreground">
+                        {diagnostics.trades.longestLossStreak}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-md border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Segment</TableHead>
+                      <TableHead>Period</TableHead>
+                      <TableHead>PnL</TableHead>
+                      <TableHead>Trades</TableHead>
+                      <TableHead>Max Drawdown</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {stabilitySegments.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-xs text-muted-foreground">
+                          Stability segments are not available.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      stabilitySegments.map((segment) => (
+                        <TableRow key={segment.segmentIndex}>
+                          <TableCell className="text-xs">{segment.segmentIndex}</TableCell>
+                          <TableCell className="font-mono text-[11px] text-muted-foreground">
+                            {(segment.from ?? "N/A")} / {(segment.to ?? "N/A")}
+                          </TableCell>
+                          <TableCell className={segment.pnl !== null && segment.pnl < 0 ? "text-xs text-loss" : "text-xs text-profit"}>
+                            {formatDiagnosticsValue(segment.pnl, { digits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-xs">{segment.tradeCount}</TableCell>
+                          <TableCell className="text-xs text-loss">
+                            {formatDiagnosticsValue(segment.maxDrawdown, { digits: 2 })}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={segment.status === "weak" ? "destructive" : "secondary"}>
+                              {diagnosticsStatusLabel(segment.status)}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-md border border-border bg-panel-subtle p-3 text-xs text-muted-foreground">
+              This run was created before diagnostics were available or the backend did not return
+              diagnostics for this result.
+            </div>
+          )}
+        </SurfaceCard>
+      ) : null}
 
       {hasRunMetrics ? (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2 2xl:grid-cols-4">

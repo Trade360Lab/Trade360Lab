@@ -63,6 +63,7 @@ function mergeBackendRunWithLocalState(backendRun: Run, localRun?: Run) {
     strategy: localRun.strategy || backendRun.strategy,
     tags: localRun.tags.length > 0 ? localRun.tags : backendRun.tags,
     artifacts: localRun.artifacts.length > 0 ? localRun.artifacts : backendRun.artifacts,
+    diagnostics: backendRun.diagnostics ?? localRun.diagnostics ?? null,
     strategyParams: localRun.strategyParams ?? backendRun.strategyParams,
     commit: localRun.commit || backendRun.commit,
     config: localRun.config || backendRun.config,
@@ -189,6 +190,10 @@ export function RunStoreProvider({ children }: { children: React.ReactNode }) {
           options?.preserveFields?.artifacts ??
           existingRun?.artifacts ??
           remoteRun.artifacts,
+        diagnostics:
+          options?.preserveFields?.diagnostics ??
+          existingRun?.diagnostics ??
+          remoteRun.diagnostics,
         config:
           options?.preserveFields?.config ??
           existingRun?.config ??

@@ -1,5 +1,6 @@
 import type { Run, RunArtifact, RunMetrics, RunParams, RunStatus, Strategy } from "@/lib/types";
 import { apiFetch } from "@/lib/api/client";
+import { normalizeRunDiagnostics } from "@/lib/run-diagnostics";
 
 type BackendRunResponse = {
   id: number;
@@ -16,6 +17,7 @@ type BackendRunResponse = {
   parameters?: Record<string, unknown> | null;
   params?: Record<string, unknown> | null;
   metrics?: Record<string, unknown> | null;
+  diagnostics?: Run["diagnostics"];
   errorMessage?: string | null;
   createdAt: string;
   finishedAt?: string | null;
@@ -251,6 +253,7 @@ function normalizeBackendRun(payload: unknown): BackendRunResponse | null {
       candidate.metrics && typeof candidate.metrics === "object"
         ? (candidate.metrics as Record<string, unknown>)
         : null,
+    diagnostics: normalizeRunDiagnostics(candidate.diagnostics),
     errorMessage: typeof candidate.errorMessage === "string" ? candidate.errorMessage : null,
     createdAt: candidate.createdAt,
     startedAt: typeof candidate.startedAt === "string" ? candidate.startedAt : null,
@@ -288,6 +291,7 @@ export function toFrontendRun(
     params: toRunParams(backendRun.interval, backendRun.from, backendRun.to),
     strategyParams: backendRun.params ?? {},
     metrics: toFrontendMetrics(backendRun.metrics),
+    diagnostics: backendRun.diagnostics ?? null,
     status: toFrontendStatus(backendRun.status),
     artifacts: [],
     createdAt: backendRun.createdAt,
