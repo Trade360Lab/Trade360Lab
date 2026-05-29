@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useRuns } from "@/features/runs/store/run-store";
+import { diagnosticsStatusLabel, diagnosticsWarningsCount, formatDiagnosticsNumber, formatDiagnosticsPercent } from "@/lib/run-diagnostics";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { equityCurve } from "@/lib/demo-data/charts";
 
@@ -132,15 +133,20 @@ export default function CompareRunsPage() {
           <SurfaceCard title="Метрики" subtitle="Дельта по каждому запуску." contentClassName="p-0">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Запуск</TableHead>
-                  <TableHead>PnL</TableHead>
-                  <TableHead>Шарп</TableHead>
-                  <TableHead>Макс. просадка</TableHead>
-                  <TableHead>Сделки</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+                  <TableRow>
+                    <TableHead>Запуск</TableHead>
+                    <TableHead>PnL</TableHead>
+                    <TableHead>Шарп</TableHead>
+                    <TableHead>Макс. просадка</TableHead>
+                    <TableHead>Win rate</TableHead>
+                    <TableHead>Profit factor</TableHead>
+                    <TableHead>Сделки</TableHead>
+                    <TableHead>Diagnostics</TableHead>
+                    <TableHead>Warnings</TableHead>
+                    <TableHead>Stability</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                 {selectedRuns.map((run) => (
                   <TableRow key={run.id}>
                     <TableCell className="font-mono text-xs text-foreground">
@@ -153,10 +159,31 @@ export default function CompareRunsPage() {
                       {run.metrics.sharpe.toFixed(2)}
                     </TableCell>
                     <TableCell className="text-xs text-loss">
-                      {run.metrics.maxDrawdown.toFixed(1)}%
+                      {run.diagnostics
+                        ? formatDiagnosticsPercent(run.diagnostics.risk.maxDrawdownPct)
+                        : `${run.metrics.maxDrawdown.toFixed(1)}%`}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {run.metrics.trades}
+                      {run.diagnostics
+                        ? formatDiagnosticsPercent(run.diagnostics.trades.winRate)
+                        : `${run.metrics.winrate.toFixed(1)}%`}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {run.diagnostics
+                        ? formatDiagnosticsNumber(run.diagnostics.trades.profitFactor)
+                        : "n/a"}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {run.diagnostics?.trades.tradeCount ?? run.metrics.trades}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {diagnosticsStatusLabel(run.diagnostics?.diagnosticsStatus)}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {diagnosticsWarningsCount(run.diagnostics)}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {diagnosticsStatusLabel(run.diagnostics?.stability.status)}
                     </TableCell>
                   </TableRow>
                 ))}
