@@ -11,6 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { useRuns } from "@/features/runs/store/run-store";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { equityCurve } from "@/lib/demo-data/charts";
+import {
+  diagnosticsStatusLabel,
+  formatDiagnosticsValue,
+} from "@/lib/run-diagnostics";
 
 const lineColors = [
   "hsl(var(--chart-1))",
@@ -137,7 +141,12 @@ export default function CompareRunsPage() {
                   <TableHead>PnL</TableHead>
                   <TableHead>Шарп</TableHead>
                   <TableHead>Макс. просадка</TableHead>
+                  <TableHead>Win Rate</TableHead>
+                  <TableHead>Profit Factor</TableHead>
                   <TableHead>Сделки</TableHead>
+                  <TableHead>Diagnostics</TableHead>
+                  <TableHead>Warnings</TableHead>
+                  <TableHead>Stability</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -156,7 +165,22 @@ export default function CompareRunsPage() {
                       {run.metrics.maxDrawdown.toFixed(1)}%
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
+                      {formatDiagnosticsValue(run.diagnostics?.trades.winRate, { suffix: "%", digits: 1 })}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {formatDiagnosticsValue(run.diagnostics?.trades.profitFactor, { digits: 2 })}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
                       {run.metrics.trades}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {diagnosticsStatusLabel(run.diagnostics?.diagnosticsStatus)}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {run.diagnostics?.warnings.length ?? 0}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {diagnosticsStatusLabel(run.diagnostics?.stability.status)}
                     </TableCell>
                   </TableRow>
                 ))}
