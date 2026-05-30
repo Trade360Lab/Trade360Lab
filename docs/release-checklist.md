@@ -1,12 +1,12 @@
 <h1 align="center">Чеклист альфа-релиза</h1>
 
-Целевой релиз: `v0.9.2-alpha.1`
+Целевой релиз: `v0.9.5-alpha.1`
 
 <h2 align="center">Область релиза</h2>
-- [x] Выбраны тег и версия релиза: `0.9.2-alpha.1`
+- [x] Выбраны тег и версия релиза: `0.9.5-alpha.1`
 - [x] Журнал изменений обновлен для этого релиза
 - [x] Черновик release notes подготовлен
-- [ ] GitHub Release создан из тега `v0.9.2-alpha.1`
+- [ ] GitHub Release создан из тега `v0.9.5-alpha.1`
 
 <h2 align="center">Качество кода</h2>
 - [ ] Frontend: `npm --prefix frontend ci`
@@ -22,6 +22,15 @@
 - [ ] Java: `cd backend/java && mvn -B test`
 - [ ] Java: `cd backend/java && mvn -B package -DskipTests`
 
+<h2 align="center">Diagnostics checks</h2>
+- [ ] Python diagnostics handle empty trades, only losses, and only wins
+- [ ] Python diagnostics calculate max drawdown and recovery bars
+- [ ] Java run result API returns optional `diagnostics`
+- [ ] Старые runs без diagnostics возвращаются без ошибки
+- [ ] Frontend Strategy Report показывает diagnostics и missing state
+- [ ] `/compare` сравнивает max drawdown, win rate, profit factor, trade count, diagnostics status, warning count и stability status
+- [ ] Export artifacts include `strategy-report-{runId}.json`
+
 <h2 align="center">Проверка запуска</h2>
 - [ ] `docker compose config -q`
 - [ ] `docker compose up --build` запускает все сервисы
@@ -29,9 +38,9 @@
 - [ ] Проверка Java API: `http://localhost:18080/api/health`
 - [ ] Проверка Python parser: `http://localhost:18000/health`
 - [ ] `scripts/docker-compose-smoke.sh` завершается успешно
-- [ ] `scripts/export-openapi-artifacts.sh 0.9.2-alpha.1` записывает:
-  - `artifacts/openapi-java-v0.9.2-alpha.1.json`
-  - `artifacts/openapi-python-v0.9.2-alpha.1.json`
+- [ ] `scripts/export-openapi-artifacts.sh 0.9.5-alpha.1` записывает:
+  - `artifacts/openapi-java-v0.9.5-alpha.1.json`
+  - `artifacts/openapi-python-v0.9.5-alpha.1.json`
 - [ ] `scripts/collect-diagnostics.sh` создает diagnostics bundle и не падает при unavailable services
 - [ ] Security scans видимы в CI или локальном отчете
 
@@ -52,3 +61,5 @@
 - [ ] План rollback задокументирован
 - [ ] В release notes указано, что real order submission остается выключенным по умолчанию
 - [ ] В release notes указано, что testnet certification не означает production readiness
+- [ ] В release notes указано, что backtest diagnostics не являются trading signals
+- [ ] В release notes указано, что Strategy Report не означает production readiness
