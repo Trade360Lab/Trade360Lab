@@ -11,6 +11,6 @@ def test_readiness_does_not_expose_internal_secret() -> None:
     assert response.status_code == 200
     payload = response.json()
     assert payload["service"] == "python-parser"
-    assert payload["parserVersion"] == "0.9.2-alpha.1"
+    assert payload["parserVersion"] == "0.9.5-alpha.1"
     assert "secret" not in payload
     assert "internalAuthConfigured" in payload

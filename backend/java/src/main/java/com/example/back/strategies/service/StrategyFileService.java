@@ -56,7 +56,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class StrategyFileService {
 
     private static final String DEFAULT_STRATEGY_TYPE = "BACKTEST";
-    private static final String DEFAULT_ENGINE_VERSION = "python-execution-engine/0.9.1-alpha.1";
+    private static final String DEFAULT_ENGINE_VERSION = "python-execution-engine/0.9.5-alpha.1";
     private static final Pattern STRATEGY_KEY_PATTERN = Pattern.compile("[^a-z0-9-]+");
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
     };
