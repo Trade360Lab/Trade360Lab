@@ -63,7 +63,7 @@ def create_app() -> FastAPI:
 
     app = FastAPI(
         title="TradeLab Python Parser API",
-        version="0.9.2-alpha.1",
+        version="0.9.5-alpha.1",
         description="Internal API for candle imports, strategy validation, and strategy execution.",
         docs_url="/docs",
         redoc_url="/redoc",
@@ -201,7 +201,7 @@ def create_app() -> FastAPI:
         return ReadinessResponse(
             status="ready" if database_status == "ok" else "degraded",
             service="python-parser",
-            parserVersion="0.9.2-alpha.1",
+            parserVersion="0.9.5-alpha.1",
             database=database_status,
             engineVersion=ENGINE_VERSION,
             internalAuthConfigured=internal_auth_status,

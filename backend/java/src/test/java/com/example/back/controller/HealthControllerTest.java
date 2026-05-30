@@ -79,7 +79,7 @@ class HealthControllerTest {
         mockMvc.perform(get("/api/readiness"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.status", is("ready")))
-            .andExpect(jsonPath("$.apiVersion", is("0.9.2-alpha.1")))
+            .andExpect(jsonPath("$.apiVersion", is("0.9.5-alpha.1")))
             .andExpect(jsonPath("$.database", is("ok")))
             .andExpect(jsonPath("$.realOrderSubmissionEnabled", is(false)));
     }
@@ -89,9 +89,9 @@ class HealthControllerTest {
         PythonReadinessResponse response = new PythonReadinessResponse();
         response.setStatus("ready");
         response.setService("python-parser");
-        response.setParserVersion("0.9.2-alpha.1");
+        response.setParserVersion("0.9.5-alpha.1");
         response.setDatabase("ok");
-        response.setEngineVersion("python-execution-engine/0.9.2-alpha.1");
+        response.setEngineVersion("python-execution-engine/0.9.5-alpha.1");
         response.setInternalAuthConfigured("configured");
         when(pythonParserClient.getReadiness()).thenReturn(response);
 
