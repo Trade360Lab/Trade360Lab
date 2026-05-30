@@ -1,6 +1,6 @@
 # Local Backup And Restore
 
-Target release: `v0.9.2-alpha.1`
+Target release: `v0.9.5-alpha.1`
 
 These scripts are for local alpha PostgreSQL recovery workflows using Docker Compose defaults.
 

@@ -1,6 +1,6 @@
 # Diagnostics Collection
 
-Target release: `v0.9.2-alpha.1`
+Target release: `v0.9.5-alpha.1`
 
 Use the diagnostics collector when validating alpha releases or attaching troubleshooting context to GitHub Issues.
 
@@ -18,6 +18,7 @@ Collected artifacts include:
 - Docker Compose config
 - latest risk events when authenticated
 - latest certification report when authenticated
+- run strategy report artifacts when attached to an issue manually
 - Java and Python OpenAPI payloads
 
 Set `AUTH_TOKEN` to include authenticated live trading endpoints.
