@@ -1,4 +1,4 @@
 export const releaseInfo = {
-  version: "0.9.2-alpha.1",
-  name: "Operational Readiness & Audit Hardening",
+  version: "0.9.5-alpha.1",
+  name: "Backtest Diagnostics & Strategy Report",
 };

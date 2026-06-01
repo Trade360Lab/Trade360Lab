@@ -30,6 +30,8 @@ public class PythonRunExecuteResponse {
 
     private Map<String, Object> artifacts;
 
+    private RunDiagnosticsResponse diagnostics;
+
     private String engineVersion;
 
     private String runId;

@@ -113,6 +113,7 @@ public class RunService {
                 .summary(response.summary())
                 .metrics(response.metrics())
                 .artifacts(response.artifacts())
+                .diagnostics(response.diagnostics())
                 .trades(trades)
                 .equityCurve(equityCurve)
                 .errorMessage(run.getErrorMessage())

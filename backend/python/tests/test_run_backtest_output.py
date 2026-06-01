@@ -48,6 +48,8 @@ def test_execute_run_returns_success_contract_with_artifacts(tmp_path):
     assert output["status"] == "SUCCESS"
     assert output["errorMessage"] is None
     assert output["metrics"]["trades"] >= 1
+    assert output["diagnostics"]["diagnosticsStatus"] in {"healthy", "mixed", "fragile"}
+    assert output["diagnostics"]["trades"]["tradeCount"] >= 1
     assert output["artifacts"]["equityCurvePath"]
     assert output["artifacts"]["tradesPath"]
     assert output["artifacts"]["summaryPath"]

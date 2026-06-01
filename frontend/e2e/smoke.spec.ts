@@ -25,7 +25,7 @@ async function seedSession(page: Page) {
       json: {
         status: "ready",
         service: "java-api",
-        apiVersion: "0.9.2-alpha.1",
+        apiVersion: "0.9.5-alpha.1",
         database: "ok",
         migrationStatus: "flyway-baseline-present",
         liveTradingMode: "guarded-alpha",
@@ -39,9 +39,9 @@ async function seedSession(page: Page) {
       json: {
         status: "ready",
         service: "python-parser",
-        parserVersion: "0.9.2-alpha.1",
+        parserVersion: "0.9.5-alpha.1",
         database: "ok",
-        engineVersion: "python-execution-engine/0.9.2-alpha.1",
+        engineVersion: "python-execution-engine/0.9.5-alpha.1",
         internalAuthConfigured: "configured",
       },
     })
@@ -111,5 +111,5 @@ test("live trading safety and service health pages render", async ({ page }) => 
 
   await gotoReady(page, "/settings");
   await expect(page.getByText("Readiness Dashboard")).toBeVisible();
-  await expect(page.getByText("v0.9.2-alpha.1").first()).toBeVisible();
+  await expect(page.getByText("v0.9.5-alpha.1").first()).toBeVisible();
 });

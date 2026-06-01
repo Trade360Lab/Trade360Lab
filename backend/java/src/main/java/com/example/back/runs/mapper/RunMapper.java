@@ -1,6 +1,7 @@
 package com.example.back.runs.mapper;
 
 import com.example.back.backtest.model.BacktestStatus;
+import com.example.back.runs.dto.RunDiagnosticsResponse;
 import com.example.back.runs.dto.RunResponse;
 import com.example.back.runs.dto.RunStatusResponse;
 import com.example.back.runs.entity.RunEntity;
@@ -52,6 +53,7 @@ public class RunMapper {
                 .summary(readNullableJsonMap(entity.getSummaryJson()))
                 .metrics(readNullableJsonMap(entity.getMetricsJson()))
                 .artifacts(readNullableJsonMap(entity.getArtifactsJson()))
+                .diagnostics(readDiagnostics(entity.getArtifactsJson()))
                 .errorMessage(entity.getErrorMessage())
                 .errorDetails(readNullableJsonMap(entity.getErrorDetailsJson()))
                 .build();
@@ -109,6 +111,23 @@ public class RunMapper {
             return null;
         }
         return readJsonMap(json);
+    }
+
+    private RunDiagnosticsResponse readDiagnostics(String artifactsJson) {
+        Map<String, Object> artifacts = readNullableJsonMap(artifactsJson);
+        if (artifacts == null) {
+            return null;
+        }
+        Object diagnostics = artifacts.get("diagnostics");
+        if (diagnostics == null) {
+            return null;
+        }
+        try {
+            return objectMapper.convertValue(diagnostics, RunDiagnosticsResponse.class);
+        } catch (IllegalArgumentException exception) {
+            log.warn("Failed to parse run diagnostics payload: {}", diagnostics, exception);
+            return null;
+        }
     }
 
     private Map<String, Object> readParameters(Map<String, Object> payload) {

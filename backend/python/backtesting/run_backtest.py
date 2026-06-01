@@ -8,6 +8,7 @@ from typing import Any
 from backtesting.artifacts.writer import JsonArtifactWriter
 from backtesting.engine.backtest_engine import BacktestConfig, BacktestEngine
 from backtesting.execution.context import ExecutionContext
+from parser.services.backtest_diagnostics import calculate_backtest_diagnostics
 
 
 def execute_run(payload: dict[str, Any]) -> dict[str, Any]:
@@ -37,11 +38,20 @@ def execute_run(payload: dict[str, Any]) -> dict[str, Any]:
             strategy_params=payload.get("strategy_params") or {},
         )
         artifacts = JsonArtifactWriter().write(context=context, result=result)
+        result_payload = result.to_dict()
+        diagnostics = calculate_backtest_diagnostics(
+            summary=result_payload.get("summary", {}),
+            metrics=normalize_metrics(result_payload.get("summary", {})),
+            trades=result_payload.get("trades", []),
+            equity_curve=result_payload.get("equity_curve", []),
+            starting_equity=config.initial_cash,
+        )
         output = {
             "status": "SUCCESS",
-            "metrics": normalize_metrics(result.to_dict().get("summary", {})),
+            "metrics": normalize_metrics(result_payload.get("summary", {})),
             "errorMessage": None,
             "artifacts": artifacts,
+            "diagnostics": diagnostics,
             "metadata": result.metadata,
         }
         persisted_artifacts = materialize_artifacts(artifacts)

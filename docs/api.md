@@ -134,6 +134,46 @@
 
 Отменяет queued job сразу. Для running job выставляет `cancelRequested=true`; Python interruption будет добавлен позже.
 
+<h3 align="center">GET `/api/runs/{id}/result`</h3>
+
+Возвращает результат запуска, сделки, equity curve, artifacts metadata и optional diagnostics. Старые runs могут не иметь diagnostics, поэтому clients должны поддерживать `diagnostics=null` или отсутствие поля.
+
+Пример diagnostics payload:
+
+```json
+{
+  "diagnosticsStatus": "mixed",
+  "diagnosticsSummary": "Backtest produced too few trades to evaluate stability.",
+  "risk": {
+    "maxDrawdown": 123.45,
+    "maxDrawdownPct": 8.2,
+    "drawdownStart": "2024-01-01T00:00:00Z",
+    "drawdownEnd": "2024-01-05T00:00:00Z",
+    "recoveryBars": 12
+  },
+  "trades": {
+    "tradeCount": 42,
+    "winningTrades": 22,
+    "losingTrades": 20,
+    "winRate": 52.38,
+    "profitFactor": 1.34,
+    "averageWin": 18.4,
+    "averageLoss": -14.1,
+    "bestTrade": 104.2,
+    "worstTrade": -76.5,
+    "longestWinStreak": 5,
+    "longestLossStreak": 4
+  },
+  "stability": {
+    "status": "mixed",
+    "segments": []
+  },
+  "warnings": []
+}
+```
+
+Diagnostics являются research artifact для alpha validation. Они не являются trading signal и не подтверждают production trading readiness.
+
 <h3 align="center">GET `/api/execution-jobs`</h3>
 
 Возвращает execution jobs текущего пользователя.
@@ -228,7 +268,7 @@ Compatibility upload flow. Создает strategy registry record и initial im
 
 <h3 align="center">GET `/api/runs/{id}/artifacts`</h3>
 
-Возвращает metadata артефактов запуска, доступных текущему пользователю.
+Возвращает metadata артефактов запуска, доступных текущему пользователю. Для runs с diagnostics успешный запуск создает `strategy-report-{runId}.json`.
 
 <h3 align="center">GET `/api/runs/{id}/artifacts/{artifactId}`</h3>
 

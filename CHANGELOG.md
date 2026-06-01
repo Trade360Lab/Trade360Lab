@@ -4,6 +4,32 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.9.5-alpha.1] - 2026-05-30
+
+### Backtest Diagnostics & Strategy Report
+
+### Added
+- Backtest diagnostics model for run results.
+- Strategy report with risk, trade, and stability sections.
+- Drawdown and trade distribution summaries.
+- Stability segment analysis for backtest periods.
+- Diagnostics warnings for fragile or low-sample results.
+- Exportable strategy report artifact.
+- Frontend Strategy Report section on run detail pages.
+- Diagnostics fields in run comparison views.
+
+### Changed
+- Run result API now exposes optional diagnostics data.
+- Frontend run detail pages handle richer result analysis.
+- Release checklist updated for v0.9.5-alpha.1.
+
+### Safety Notes
+- Backtest diagnostics are research artifacts, not trading signals.
+- Strategy reports do not imply production readiness.
+- Real order submission remains disabled by default.
+
+---
+
 ## [0.9.2-alpha.1] - 2026-05-09
 
 ### Operational Readiness & Audit Hardening
