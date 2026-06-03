@@ -17,7 +17,7 @@ from parser.services.backtest_diagnostics import calculate_backtest_diagnostics
 logger = logging.getLogger(__name__)
 
 
-ENGINE_VERSION = "python-execution-engine/0.9.5-alpha.1"
+ENGINE_VERSION = "python-execution-engine/0.9.6-alpha.1"
 
 
 class StrategyExecutionService:

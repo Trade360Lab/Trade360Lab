@@ -84,6 +84,9 @@ class LiveTradingStartupSafetyCheckTest {
                 new BigDecimal("100"),
                 new BigDecimal("500"),
                 new BigDecimal("1000"),
+                new BigDecimal("250"),
+                new BigDecimal("2"),
+                60,
                 3,
                 10,
                 new LiveTradingProperties.Binance(

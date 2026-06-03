@@ -99,6 +99,13 @@ type LiveRiskStatus = {
   killSwitchActive: boolean;
   killSwitchReason?: string | null;
   circuitBreakers: { exchange: string; active: boolean; reason?: string | null }[];
+  syncedPositionExposure?: number | null;
+  openOrderExposure?: number | null;
+  acceptedDailyNotional?: number | null;
+  realizedIntradayLoss?: number | null;
+  maxAllowedDailyLoss?: number | null;
+  maxAllowedSlippagePercent?: number | null;
+  maxMarketDataAgeSeconds?: number | null;
 };
 
 type LiveRiskEvent = {
@@ -461,8 +468,16 @@ export default function LiveTradingPage() {
               <Metric label="Credentials" value={health?.credentialsValid ? "Valid" : "Missing"} />
               <Metric label="Submission" value={health?.realOrderSubmissionEnabled ? "Enabled" : "Disabled"} />
             </div>
+            <div className="mt-3 grid gap-3 md:grid-cols-4">
+              <Metric label="Position exposure" value={formatMoney(risk?.syncedPositionExposure)} />
+              <Metric label="Open order exposure" value={formatMoney(risk?.openOrderExposure)} />
+              <Metric label="Daily notional" value={formatMoney(risk?.acceptedDailyNotional)} />
+              <Metric label="Realized loss" value={`${formatMoney(risk?.realizedIntradayLoss)} / ${formatMoney(risk?.maxAllowedDailyLoss)}`} />
+              <Metric label="Slippage guard" value={`${risk?.maxAllowedSlippagePercent ?? "-"}% max`} />
+              <Metric label="Market data age" value={`${risk?.maxMarketDataAgeSeconds ?? "-"}s max`} />
+            </div>
             <div className="mt-4 rounded-[16px] border border-status-warning/30 bg-status-warning/10 px-4 py-3 text-xs text-status-warning">
-              Real order submission remains disabled by default. Testnet certification does not imply production readiness.
+              Real order submission remains disabled by default. Exposure, slippage, realized-loss, and stale-data guards reduce unsafe submissions but do not certify production readiness.
             </div>
           </SurfaceCard>
 
@@ -561,6 +576,7 @@ export default function LiveTradingPage() {
                   <TableCell>{position.exchange}</TableCell>
                   <TableCell>{position.symbol}</TableCell>
                   <TableCell>{Number(position.quantity).toLocaleString("en-US", { maximumFractionDigits: 8 })}</TableCell>
+                  <TableCell>{formatMoney(position.realizedPnl)}</TableCell>
                 </TableRow>
               ))}
             </LiveTable>

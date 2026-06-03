@@ -4,6 +4,7 @@ import com.example.back.livetrading.entity.LiveOrderEntity;
 import com.example.back.livetrading.entity.LiveOrderSide;
 import com.example.back.livetrading.entity.LiveOrderStatus;
 import com.example.back.livetrading.entity.LiveOrderType;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -27,4 +28,14 @@ public interface LiveOrderRepository extends JpaRepository<LiveOrderEntity, Long
     );
 
     long countByUserIdAndExchangeAndStatus(Long userId, String exchange, LiveOrderStatus status);
+
+    List<LiveOrderEntity> findAllByUserIdAndExchangeAndStatusIn(Long userId, String exchange, Collection<LiveOrderStatus> statuses);
+
+    List<LiveOrderEntity> findAllByUserIdAndSessionIdAndStatusInAndCreatedAtGreaterThanEqual(
+            Long userId,
+            Long sessionId,
+            Collection<LiveOrderStatus> statuses,
+            Instant createdAt
+    );
 }
+

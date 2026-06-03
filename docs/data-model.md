@@ -399,6 +399,8 @@ Manual live execution boundary с per-session risk limits.
 - `max_position_notional`
 - `max_daily_notional`
 - `symbol_whitelist`
+
+`v0.9.6-alpha.1` uses these caps together with runtime configuration for max daily loss, max slippage percent, and max market-data age. No new table columns are required for those response-only guards.
 - `created_at`
 - `updated_at`
 

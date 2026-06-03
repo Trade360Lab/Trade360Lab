@@ -10,6 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.back.backtest.executor.PythonBacktestExecutor;
 import com.example.back.imports.client.PythonParserClient;
 import com.example.back.livetrading.entity.LiveOrderStatus;
+import com.example.back.livetrading.entity.LivePositionEntity;
+import com.example.back.livetrading.entity.LivePositionSyncStatus;
 import com.example.back.livetrading.repository.CircuitBreakerStateRepository;
 import com.example.back.livetrading.repository.KillSwitchStateRepository;
 import com.example.back.livetrading.repository.LiveExchangeCredentialRepository;
@@ -20,12 +22,15 @@ import com.example.back.livetrading.repository.LiveTradingSessionRepository;
 import com.example.back.livetrading.repository.TestnetCertificationReportRepository;
 import com.example.back.livetrading.service.ExchangeBalanceSnapshot;
 import com.example.back.livetrading.service.ExchangeCredentials;
+import com.example.back.livetrading.service.ExchangePriceSnapshot;
 import com.example.back.livetrading.service.ExchangePositionSnapshot;
 import com.example.back.livetrading.service.LiveExchangeAdapter;
 import com.example.back.livetrading.service.LiveOrderRequest;
 import com.example.back.livetrading.service.LiveOrderResult;
 import com.example.back.support.TestAuth;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +59,9 @@ import org.springframework.beans.factory.annotation.Autowired;
         "live.trading.max-rejected-orders-before-circuit-breaker=1"
 })
 class LiveTradingControllerIntegrationTest {
+
+    private static Instant observedAt = Instant.now();
+    private static BigDecimal latestPrice = new BigDecimal("100.00000000");
 
     @Autowired
     private MockMvc mockMvc;
@@ -98,6 +106,8 @@ class LiveTradingControllerIntegrationTest {
         credentialRepository.deleteAll();
         circuitBreakerRepository.deleteAll();
         killSwitchRepository.deleteAll();
+        observedAt = Instant.now();
+        latestPrice = new BigDecimal("100.00000000");
     }
 
     @Test
@@ -196,6 +206,95 @@ class LiveTradingControllerIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("REJECTED"))
                 .andExpect(jsonPath("$.rejectedReason").value("Circuit breaker is active for exchange testx"));
+    }
+
+
+    @Test
+    void rejectsLimitOrdersOutsideSlippageGuard() throws Exception {
+        Long sessionId = createEnabledSession();
+
+        mockMvc.perform(post("/api/live/orders")
+                        .with(TestAuth.authenticatedRequest())
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "sessionId": %d,
+                                  "side": "BUY",
+                                  "type": "LIMIT",
+                                  "quantity": 0.01,
+                                  "requestedPrice": 110
+                                }
+                                """.formatted(sessionId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("REJECTED"))
+                .andExpect(jsonPath("$.rejectedReason").value("Limit price exceeds max slippage percent 2.00000000"));
+    }
+
+    @Test
+    void rejectsOrdersWithStaleMarketDataBeforeSubmission() throws Exception {
+        Long sessionId = createEnabledSession();
+        observedAt = Instant.now().minus(2, ChronoUnit.MINUTES);
+
+        mockMvc.perform(post("/api/live/orders")
+                        .with(TestAuth.authenticatedRequest())
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "sessionId": %d,
+                                  "side": "BUY",
+                                  "type": "MARKET",
+                                  "quantity": 0.01
+                                }
+                                """.formatted(sessionId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("REJECTED"))
+                .andExpect(jsonPath("$.rejectedReason").value("Market data is stale for symbol BTCUSDT"));
+    }
+
+    @Test
+    void rejectsOrdersThatWouldExceedPortfolioExposure() throws Exception {
+        Long sessionId = createEnabledSession();
+        LivePositionEntity position = new LivePositionEntity();
+        position.setUserId(TestAuth.USER_ID);
+        position.setExchange("testx");
+        position.setSymbol("ETHUSDT");
+        position.setQuantity(new BigDecimal("4.90"));
+        position.setAverageEntryPrice(new BigDecimal("100.00000000"));
+        position.setRealizedPnl(BigDecimal.ZERO);
+        position.setUnrealizedPnl(BigDecimal.ZERO);
+        position.setSyncStatus(LivePositionSyncStatus.SYNCED);
+        positionRepository.save(position);
+
+        mockMvc.perform(post("/api/live/orders")
+                        .with(TestAuth.authenticatedRequest())
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "sessionId": %d,
+                                  "side": "BUY",
+                                  "type": "MARKET",
+                                  "quantity": 0.20
+                                }
+                                """.formatted(sessionId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("REJECTED"))
+                .andExpect(jsonPath("$.rejectedReason").value("Portfolio exposure would exceed max position limit 500.00000000"));
+    }
+
+    @Test
+    void riskStatusIncludesExposureSummary() throws Exception {
+        createEnabledSession();
+
+        mockMvc.perform(get("/api/live/risk/status")
+                        .with(TestAuth.authenticatedRequest()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.syncedPositionExposure").exists())
+                .andExpect(jsonPath("$.openOrderExposure").exists())
+                .andExpect(jsonPath("$.acceptedDailyNotional").exists())
+                .andExpect(jsonPath("$.realizedIntradayLoss").exists())
+                .andExpect(jsonPath("$.maxAllowedDailyLoss").value(250.00000000))
+                .andExpect(jsonPath("$.maxAllowedSlippagePercent").value(2.00000000))
+                .andExpect(jsonPath("$.maxMarketDataAgeSeconds").value(60));
     }
 
     @Test
@@ -367,7 +466,12 @@ class LiveTradingControllerIntegrationTest {
 
                 @Override
                 public Optional<BigDecimal> getLatestPrice(String symbol) {
-                    return Optional.of(new BigDecimal("100.00000000"));
+                    return Optional.of(latestPrice);
+                }
+
+                @Override
+                public Optional<ExchangePriceSnapshot> getLatestPriceSnapshot(String symbol) {
+                    return Optional.of(new ExchangePriceSnapshot(latestPrice, observedAt));
                 }
 
                 @Override

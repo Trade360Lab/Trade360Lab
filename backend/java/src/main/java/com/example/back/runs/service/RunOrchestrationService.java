@@ -54,7 +54,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class RunOrchestrationService {
 
-    private static final String DEFAULT_ENGINE_VERSION = "python-execution-engine/0.9.5-alpha.1";
+    private static final String DEFAULT_ENGINE_VERSION = "python-execution-engine/0.9.6-alpha.1";
     private static final String PYTHON_EXECUTE_ENDPOINT = "/internal/runs/execute";
     private static final String STRATEGY_REPORT_SAFETY_NOTE = "This report is for alpha research and validation only. "
             + "It is not financial advice and does not certify production trading readiness.";

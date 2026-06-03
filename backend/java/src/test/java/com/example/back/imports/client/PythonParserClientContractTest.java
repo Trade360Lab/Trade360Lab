@@ -92,7 +92,7 @@ class PythonParserClientContractTest {
                               }
                             ]
                           },
-                          "engineVersion": "python-execution-engine/0.9.5-alpha.1",
+                          "engineVersion": "python-execution-engine/0.9.6-alpha.1",
                           "runId": "run-1",
                           "jobId": "job-1",
                           "correlationId": "corr-1",

@@ -77,6 +77,9 @@ live:
     default-max-order-notional: ${LIVE_TRADING_DEFAULT_MAX_ORDER_NOTIONAL:100.00000000}
     default-max-position-notional: ${LIVE_TRADING_DEFAULT_MAX_POSITION_NOTIONAL:500.00000000}
     default-max-daily-notional: ${LIVE_TRADING_DEFAULT_MAX_DAILY_NOTIONAL:1000.00000000}
+    default-max-daily-loss-notional: ${LIVE_TRADING_DEFAULT_MAX_DAILY_LOSS_NOTIONAL:250.00000000}
+    max-allowed-slippage-percent: ${LIVE_TRADING_MAX_ALLOWED_SLIPPAGE_PERCENT:2.00000000}
+    max-market-data-age-seconds: ${LIVE_TRADING_MAX_MARKET_DATA_AGE_SECONDS:60}
     max-failed-orders-before-circuit-breaker: ${LIVE_TRADING_MAX_FAILED_ORDERS_BEFORE_CIRCUIT_BREAKER:3}
     max-rejected-orders-before-circuit-breaker: ${LIVE_TRADING_MAX_REJECTED_ORDERS_BEFORE_CIRCUIT_BREAKER:10}
     binance:

@@ -43,7 +43,10 @@ import com.example.back.livetrading.repository.LiveTradingSessionRepository;
 import com.example.back.livetrading.repository.TestnetCertificationReportRepository;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +70,12 @@ public class LiveTradingService {
             LiveOrderStatus.SUBMITTED,
             LiveOrderStatus.ACCEPTED,
             LiveOrderStatus.PARTIALLY_FILLED
+    );
+    private static final Set<LiveOrderStatus> DAILY_NOTIONAL_STATUSES = Set.of(
+            LiveOrderStatus.SUBMITTED,
+            LiveOrderStatus.ACCEPTED,
+            LiveOrderStatus.PARTIALLY_FILLED,
+            LiveOrderStatus.FILLED
     );
 
     private final LiveTradingProperties properties;
@@ -287,7 +296,14 @@ public class LiveTradingService {
                 killSwitch == null ? null : killSwitch.getActivatedAt(),
                 circuitBreakerRepository.findAllByUserIdOrderByUpdatedAtDesc(userId).stream()
                         .map(mapper::toCircuitBreakerResponse)
-                        .toList()
+                        .toList(),
+                scale(totalSyncedPositionExposure(userId, null)),
+                scale(totalOpenOrderExposure(userId, null)),
+                scale(totalAcceptedDailyNotional(userId, null)),
+                scale(totalRealizedIntradayLoss(userId, null)),
+                properties.defaultMaxDailyLossNotional(),
+                properties.maxAllowedSlippagePercent(),
+                properties.maxMarketDataAgeSeconds()
         );
     }
 
@@ -567,18 +583,46 @@ public class LiveTradingService {
                 && !List.of(session.getSymbolWhitelist().split(",")).contains(order.getSymbol())) {
             return "Symbol is not whitelisted for live trading";
         }
-        BigDecimal price = order.getType() == LiveOrderType.LIMIT
-                ? order.getRequestedPrice()
-                : adapter.getLatestPrice(order.getSymbol()).orElse(null);
-        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+        ExchangePriceSnapshot priceSnapshot = adapter.getLatestPriceSnapshot(order.getSymbol()).orElse(null);
+        if (priceSnapshot == null || priceSnapshot.price() == null || priceSnapshot.price().compareTo(BigDecimal.ZERO) <= 0) {
             return "Latest market price is unavailable";
         }
-        BigDecimal notional = scale(order.getQuantity().multiply(price));
+        if (priceSnapshot.observedAt() == null || Duration.between(priceSnapshot.observedAt(), Instant.now())
+                .compareTo(Duration.ofSeconds(properties.maxMarketDataAgeSeconds())) > 0) {
+            return "Market data is stale for symbol " + order.getSymbol();
+        }
+        BigDecimal marketPrice = priceSnapshot.price();
+        BigDecimal riskPrice = order.getType() == LiveOrderType.LIMIT ? order.getRequestedPrice() : marketPrice;
+        if (order.getType() == LiveOrderType.MARKET && order.getRequestedPrice() == null) {
+            order.setRequestedPrice(scale(marketPrice));
+        }
+        if (order.getType() == LiveOrderType.LIMIT) {
+            BigDecimal slippagePercent = order.getRequestedPrice()
+                    .subtract(marketPrice)
+                    .abs()
+                    .multiply(new BigDecimal("100"))
+                    .divide(marketPrice, MONEY_SCALE, RoundingMode.HALF_UP);
+            if (slippagePercent.compareTo(properties.maxAllowedSlippagePercent()) > 0) {
+                return "Limit price exceeds max slippage percent " + properties.maxAllowedSlippagePercent();
+            }
+        }
+        BigDecimal notional = scale(order.getQuantity().multiply(riskPrice));
         if (notional.compareTo(session.getMaxOrderNotional()) > 0) {
             return "Order notional exceeds session max order limit " + session.getMaxOrderNotional();
         }
-        if (notional.compareTo(session.getMaxPositionNotional()) > 0) {
-            return "Order would exceed max position limit " + session.getMaxPositionNotional();
+        BigDecimal projectedExposure = totalSyncedPositionExposure(session.getUserId(), session.getExchange())
+                .add(totalOpenOrderExposure(session.getUserId(), session.getExchange()))
+                .add(notional);
+        if (projectedExposure.compareTo(session.getMaxPositionNotional()) > 0) {
+            return "Portfolio exposure would exceed max position limit " + session.getMaxPositionNotional();
+        }
+        BigDecimal projectedDailyNotional = totalAcceptedDailyNotional(session.getUserId(), session.getId()).add(notional);
+        if (projectedDailyNotional.compareTo(session.getMaxDailyNotional()) > 0) {
+            return "Daily notional would exceed session max daily limit " + session.getMaxDailyNotional();
+        }
+        BigDecimal realizedIntradayLoss = totalRealizedIntradayLoss(session.getUserId(), session.getExchange());
+        if (realizedIntradayLoss.compareTo(properties.defaultMaxDailyLossNotional()) > 0) {
+            return "Realized intraday loss exceeds configured limit " + properties.defaultMaxDailyLossNotional();
         }
         if (orderRepository.existsByUserIdAndExchangeAndSymbolAndSideAndTypeAndQuantityAndStatusInAndIdNot(
                 order.getUserId(), order.getExchange(), order.getSymbol(), order.getSide(), order.getType(),
@@ -597,6 +641,59 @@ public class LiveTradingService {
             }
         }
         return null;
+    }
+
+    private BigDecimal totalSyncedPositionExposure(Long userId, String exchange) {
+        return positionRepository.findAllByUserIdOrderByExchangeAscSymbolAsc(userId).stream()
+                .filter(position -> exchange == null || exchange.equals(position.getExchange()))
+                .map(position -> safe(position.getQuantity()).abs().multiply(safe(position.getAverageEntryPrice())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal totalOpenOrderExposure(Long userId, String exchange) {
+        List<LiveOrderEntity> openOrders = exchange == null
+                ? orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
+                        .filter(order -> OPEN_STATUSES.contains(order.getStatus()))
+                        .toList()
+                : orderRepository.findAllByUserIdAndExchangeAndStatusIn(userId, exchange, OPEN_STATUSES);
+        return openOrders.stream()
+                .map(this::orderExposure)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal totalAcceptedDailyNotional(Long userId, Long sessionId) {
+        Instant dayStart = LocalDate.now(ZoneOffset.UTC).atStartOfDay().toInstant(ZoneOffset.UTC);
+        List<LiveOrderEntity> dailyOrders = sessionId == null
+                ? orderRepository.findAllByUserIdOrderByCreatedAtDesc(userId).stream()
+                        .filter(order -> DAILY_NOTIONAL_STATUSES.contains(order.getStatus()))
+                        .filter(order -> !order.getCreatedAt().isBefore(dayStart))
+                        .toList()
+                : orderRepository.findAllByUserIdAndSessionIdAndStatusInAndCreatedAtGreaterThanEqual(
+                        userId, sessionId, DAILY_NOTIONAL_STATUSES, dayStart);
+        return dailyOrders.stream()
+                .map(this::orderExposure)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal totalRealizedIntradayLoss(Long userId, String exchange) {
+        return positionRepository.findAllByUserIdOrderByExchangeAscSymbolAsc(userId).stream()
+                .filter(position -> exchange == null || exchange.equals(position.getExchange()))
+                .map(position -> safe(position.getRealizedPnl()))
+                .filter(realizedPnl -> realizedPnl.compareTo(BigDecimal.ZERO) < 0)
+                .map(BigDecimal::abs)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private BigDecimal orderExposure(LiveOrderEntity order) {
+        BigDecimal price = order.getExecutedPrice() != null ? order.getExecutedPrice() : order.getRequestedPrice();
+        if (price == null) {
+            return BigDecimal.ZERO;
+        }
+        return safe(order.getQuantity()).multiply(price);
+    }
+
+    private BigDecimal safe(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
     }
 
     private LiveOrderResponse rejectOrder(LiveOrderEntity order, String reason) {
