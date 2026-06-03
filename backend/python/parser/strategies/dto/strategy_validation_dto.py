@@ -53,7 +53,7 @@ class StrategyValidationResponse(BaseModel):
         description="Resolved strategy metadata.",
     )
     engine_version: str = Field(
-        default="python-execution-engine/0.9.5-alpha.1",
+        default="python-execution-engine/0.9.6-alpha.1",
         alias="engineVersion",
         serialization_alias="engineVersion",
         description="Python engine version used for compatibility validation.",

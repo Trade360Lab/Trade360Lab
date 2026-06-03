@@ -1,6 +1,6 @@
 # Testnet Certification Report Review
 
-Target release: `v0.9.5-alpha.1`
+Target release: `v0.9.6-alpha.1`
 
 Testnet certification reports persist the result of a Binance testnet drill. They are not production exchange certification and do not imply production readiness.
 

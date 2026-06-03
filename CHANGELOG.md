@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.9.6-alpha.1] - 2026-06-03
+
+### Live Risk Hardening & Release Evidence
+
+### Added
+- Portfolio exposure, daily notional, realized-loss, slippage, and market-data staleness guards for live orders.
+- Live risk status exposure summary for synced positions, open orders, accepted daily notional, realized loss, and configured guard thresholds.
+- Release notes and checklist updates for `v0.9.6-alpha.1`.
+
+### Changed
+- Aligned monorepo, frontend, Java, Python, diagnostics scripts, and smoke-test version metadata to `0.9.6-alpha.1`.
+- Updated alpha release workflow copy for the current release scope.
+
+### Safety Notes
+- Real order submission remains disabled by default.
+- Live risk guards do not certify production exchange trading.
+- Testnet/backtest validation remains separate from production readiness.
+
+---
+
 ## [0.9.5-alpha.1] - 2026-05-30
 
 ### Backtest Diagnostics & Strategy Report

@@ -57,6 +57,6 @@ def test_readiness_does_not_expose_internal_secret(monkeypatch) -> None:
 
     assert response_start["status"] == 200
     assert payload["service"] == "python-parser"
-    assert payload["parserVersion"] == "0.9.5-alpha.1"
+    assert payload["parserVersion"] == "0.9.6-alpha.1"
     assert "secret" not in payload
     assert "internalAuthConfigured" in payload

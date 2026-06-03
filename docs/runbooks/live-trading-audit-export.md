@@ -1,6 +1,6 @@
 # Live Trading Audit Export Runbook
 
-Target release: `v0.9.5-alpha.1`
+Target release: `v0.9.6-alpha.1`
 
 Live trading audit exports are for alpha validation and troubleshooting. They do not enable production order submission.
 

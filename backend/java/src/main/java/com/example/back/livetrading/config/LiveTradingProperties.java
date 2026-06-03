@@ -10,6 +10,9 @@ public record LiveTradingProperties(
         BigDecimal defaultMaxOrderNotional,
         BigDecimal defaultMaxPositionNotional,
         BigDecimal defaultMaxDailyNotional,
+        BigDecimal defaultMaxDailyLossNotional,
+        BigDecimal maxAllowedSlippagePercent,
+        long maxMarketDataAgeSeconds,
         int maxFailedOrdersBeforeCircuitBreaker,
         int maxRejectedOrdersBeforeCircuitBreaker,
         Binance binance
@@ -27,6 +30,15 @@ public record LiveTradingProperties(
         }
         if (defaultMaxDailyNotional == null) {
             defaultMaxDailyNotional = new BigDecimal("1000.00000000");
+        }
+        if (defaultMaxDailyLossNotional == null) {
+            defaultMaxDailyLossNotional = new BigDecimal("250.00000000");
+        }
+        if (maxAllowedSlippagePercent == null) {
+            maxAllowedSlippagePercent = new BigDecimal("2.00000000");
+        }
+        if (maxMarketDataAgeSeconds <= 0) {
+            maxMarketDataAgeSeconds = 60;
         }
         if (maxFailedOrdersBeforeCircuitBreaker <= 0) {
             maxFailedOrdersBeforeCircuitBreaker = 3;

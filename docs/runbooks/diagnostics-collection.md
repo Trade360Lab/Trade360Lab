@@ -1,6 +1,6 @@
 # Diagnostics Collection
 
-Target release: `v0.9.5-alpha.1`
+Target release: `v0.9.6-alpha.1`
 
 Use the diagnostics collector when validating alpha releases or attaching troubleshooting context to GitHub Issues.
 

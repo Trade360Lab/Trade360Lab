@@ -1,6 +1,6 @@
 <h1 align="center">Rollback релиза</h1>
 
-Целевой релиз: `v0.9.5-alpha.1`
+Целевой релиз: `v0.9.6-alpha.1`
 
 <h2 align="center">Триггеры</h2>
 
@@ -14,7 +14,7 @@
 1. Оставить `LIVE_TRADING_REAL_ORDER_SUBMISSION_ENABLED=false`.
 2. Объявить rollback в release channel.
 3. Остановить текущий стек командой `docker compose down`.
-4. Повторно развернуть последний известный исправный тег, сейчас это `v0.9.2-alpha.1`.
+4. Повторно развернуть последний известный исправный тег, сейчас это `v0.9.5-alpha.1`.
 5. Выполнить `docker compose config -q`.
 6. Выполнить `scripts/docker-compose-smoke.sh`.
 7. Проверить:

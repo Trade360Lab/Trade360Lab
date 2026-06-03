@@ -1,12 +1,12 @@
 <h1 align="center">Чеклист альфа-релиза</h1>
 
-Целевой релиз: `v0.9.5-alpha.1`
+Целевой релиз: `v0.9.6-alpha.1`
 
 <h2 align="center">Область релиза</h2>
-- [x] Выбраны тег и версия релиза: `0.9.5-alpha.1`
+- [x] Выбраны тег и версия релиза: `0.9.6-alpha.1`
 - [x] Журнал изменений обновлен для этого релиза
 - [x] Черновик release notes подготовлен
-- [ ] GitHub Release создан из тега `v0.9.5-alpha.1`
+- [ ] GitHub Release создан из тега `v0.9.6-alpha.1`
 
 <h2 align="center">Качество кода</h2>
 - [ ] Frontend: `npm --prefix frontend ci`
@@ -32,15 +32,25 @@
 - [ ] Frontend `/runs/[id]` показывает Strategy Report и graceful missing state.
 - [ ] Frontend `/compare` сравнивает max drawdown, win rate, profit factor, trade count, diagnostics status, warnings count, and stability status.
 
+
+<h2 align="center">Live risk hardening validation</h2>
+- [ ] Portfolio exposure summary reflects current synced positions and open orders.
+- [ ] Cross-symbol exposure blocks orders above session max position notional.
+- [ ] Session daily notional guard includes accepted/filled/submitted same-day orders.
+- [ ] Realized intraday loss guard blocks new orders after configured loss threshold.
+- [ ] Limit-order slippage guard rejects prices outside the configured percentage from latest market price.
+- [ ] Market-data staleness guard rejects stale price snapshots before adapter submission.
+- [ ] Risk audit shows explicit rejection reasons for exposure, daily notional, loss, slippage, and stale market data.
+
 <h2 align="center">Проверка артефактов</h2>
 - [ ] `strategy-report-{runId}.json` создается для успешного run.
 - [ ] Report artifact содержит run id, strategy id/version id, dataset id, metrics, diagnostics, warnings, generatedAt.
 - [ ] Report artifact содержит safety note.
 - [ ] `GET /api/runs/{id}/artifacts` показывает strategy report artifact.
 - [ ] `GET /api/runs/{id}/artifacts/{artifactId}/download` скачивает report JSON.
-- [ ] `scripts/export-openapi-artifacts.sh 0.9.5-alpha.1` записывает:
-  - `artifacts/openapi-java-v0.9.5-alpha.1.json`
-  - `artifacts/openapi-python-v0.9.5-alpha.1.json`
+- [ ] `scripts/export-openapi-artifacts.sh 0.9.6-alpha.1` записывает:
+  - `artifacts/openapi-java-v0.9.6-alpha.1.json`
+  - `artifacts/openapi-python-v0.9.6-alpha.1.json`
 
 <h2 align="center">Проверка запуска</h2>
 - [ ] `docker compose config -q`

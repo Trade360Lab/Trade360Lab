@@ -452,6 +452,20 @@ Rejected orders сохраняются со `status=REJECTED` и `rejectedReason
 }
 ```
 
+<h3 align="center">GET `/api/live/risk/status`</h3>
+
+Returns live risk state and release `v0.9.6-alpha.1` exposure evidence fields:
+
+- `killSwitchActive`, `killSwitchReason`, `killSwitchActivatedAt`
+- `circuitBreakers`
+- `syncedPositionExposure`
+- `openOrderExposure`
+- `acceptedDailyNotional`
+- `realizedIntradayLoss`
+- `maxAllowedDailyLoss`
+- `maxAllowedSlippagePercent`
+- `maxMarketDataAgeSeconds`
+
 <h3 align="center">GET `/api/live/orders`</h3>
 
 Возвращает live orders текущего пользователя.

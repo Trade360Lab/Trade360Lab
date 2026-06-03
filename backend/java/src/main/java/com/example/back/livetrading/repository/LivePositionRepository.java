@@ -10,4 +10,7 @@ public interface LivePositionRepository extends JpaRepository<LivePositionEntity
     List<LivePositionEntity> findAllByUserIdOrderByExchangeAscSymbolAsc(Long userId);
 
     Optional<LivePositionEntity> findByUserIdAndExchangeAndSymbol(Long userId, String exchange, String symbol);
+
+    List<LivePositionEntity> findAllByUserIdAndExchange(Long userId, String exchange);
 }
+

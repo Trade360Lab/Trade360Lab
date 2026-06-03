@@ -21,7 +21,7 @@ write_json() {
   fi
 }
 
-printf '{"release":"0.9.2-alpha.1","frontendUrl":"%s","javaUrl":"%s","pythonUrl":"%s"}\n' "$FRONTEND_URL" "$JAVA_URL" "$PYTHON_URL" > "$OUT/app-version.json"
+printf '{"release":"0.9.6-alpha.1","frontendUrl":"%s","javaUrl":"%s","pythonUrl":"%s"}\n' "$FRONTEND_URL" "$JAVA_URL" "$PYTHON_URL" > "$OUT/app-version.json"
 write_json java-health.json "$JAVA_URL/api/health"
 write_json java-readiness.json "$JAVA_URL/api/readiness"
 write_json python-health.json "$PYTHON_URL/health"

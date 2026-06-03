@@ -1,6 +1,6 @@
 # Database Migration Workflow
 
-Target release: `v0.9.5-alpha.1`
+Target release: `v0.9.6-alpha.1`
 
 Trade360Lab now includes a Flyway migration baseline for Java-managed schema evolution while keeping existing local startup simple.
 

@@ -105,6 +105,6 @@ jobs:
           prerelease: true
           files: artifacts/*.json
           body: |
-            v0.9.2-alpha.1 is an operational readiness and audit hardening alpha release. It adds live trading audit export, persistent Binance testnet certification reports, local backup/restore/reset/seed scripts, database migration baseline, diagnostics bundle collection, readiness dashboard details, dependency and secret scanning visibility, and GitHub release/safety templates.
+            v0.9.6-alpha.1 is a live risk hardening and release evidence alpha release. It aligns release metadata, strengthens live-order pre-submit guards for portfolio exposure, daily notional, realized loss, market-data staleness, and slippage, and keeps diagnostics/release artifacts auditable.
 
-            Real order submission remains disabled by default. Testnet certification reports are not production exchange certification, and this is not a production live trading release.
+            Real order submission remains disabled by default. Live risk guards and testnet/backtest validation are not production exchange certification, and this is not a production live trading release.
